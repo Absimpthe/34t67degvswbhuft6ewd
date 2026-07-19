@@ -45,6 +45,10 @@ public class TrainService {
         }
     }
 
+    public void setTrains(ArrayList<Train> trains) {
+        this.trains = trains;
+    }
+
     /**
      * Gives other classes (e.g. FileManager) access
      * to the full list of trains when needed.

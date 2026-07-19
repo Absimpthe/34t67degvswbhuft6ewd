@@ -1,5 +1,7 @@
 package exception;
 
-public class FileProcessingException {
-
+public class FileProcessingException extends Exception {
+    public FileProcessingException(String message) {
+        super(message);
+    }
 }

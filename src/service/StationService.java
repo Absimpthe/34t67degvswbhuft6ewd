@@ -45,6 +45,10 @@ public class StationService {
         }
     }
 
+    public void setStations(ArrayList<Station> stations) {
+        this.stations = stations;
+    }
+
     /**
      * Searches for a station by name (case-insensitive).
      * Matches "+searchStation(name) : Station" in the class diagram.
