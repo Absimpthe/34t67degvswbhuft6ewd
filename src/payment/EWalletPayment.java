@@ -19,17 +19,24 @@ public EWalletPayment implements Payment{
       System.out.printf(" E-Wallet Payment declined. Required RM %.2f, avaiable RM %.2f");
       return false;
     }
-
+    // need to inheretance with pasenger
+    if(pas
     System.out.println(" E-Wallet connecting to " + provider + "...");
         boolean ok = passenger.deductEwallet(amount);
         if (ok) {
             System.out.printf("  [E-WALLET] RM %.2f paid. Remaining %s balance RM %.2f.%n",
                     amount, provider, passenger.getEwalletBalance());
         }
-        return ok;
+        
+    return ok;
+    
+    @Override
+    public String getMethodName(){
+      return "E-Wallet (" + provider.getlabel() + ")";
+    }
 
-
-
-
+    public EWalletProvider getProvider() {
+      return provider;
+    }
 
 }
