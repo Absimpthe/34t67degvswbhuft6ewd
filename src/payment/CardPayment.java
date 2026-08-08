@@ -1,6 +1,6 @@
 package payment;
 
-public class CardPayment {
+public class CardPayment implements Payment{
   @Override
     public boolean pay(double amount) {
         System.out.printf("Processing cash payment of RM %.2f...%n", amount);
