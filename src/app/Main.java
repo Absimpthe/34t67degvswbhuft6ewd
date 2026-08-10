@@ -8,12 +8,7 @@ import java.util.ArrayList;
 import java.util.Scanner;
 import java.util.HashMap;
 
-/**
- * The central driving controller for the Smart Metro Ticketing System.
- * Manages the console menu presentation, routing, and data survival lifecycles.
- */
 public class Main {
-    // Static core application service layers
     private static StationService stationService = new StationService();
     private static TrainService trainService = new TrainService();
     private static TXTFileManager fileManager = new TXTFileManager();
@@ -24,7 +19,7 @@ public class Main {
     public static void main(String[] args) {
         System.out.println("--- Booting Smart Metro Ticketing System ---");
         
-        // 1. BOOT LOAD PHASE: Restore data records from persistence files
+        // Load data from files
         try {
             // Safe down-casting back to domain entity collections
             ArrayList<Station> loadedStations = (ArrayList<Station>) fileManager.loadData("stations.txt");
@@ -38,7 +33,7 @@ public class Main {
             System.out.println("[Warning] File restore bypassed: " + e.getMessage());
         }
 
-        // 2. ROOT CONSOLE LOOP
+        // Console menu
         boolean running = true;
         while (running) {
             System.out.println("\n=================================");
@@ -74,19 +69,17 @@ public class Main {
         System.out.print("Enter Secret Password: ");
         String password = scanner.nextLine().trim();
 
-        // 1. Check Admin Credentials
+        // Check admin credentials
         if (email.equals("admin@metro.com") && password.equals("admin123")) {
             System.out.println("\nAuthentication Success! Logging in as System Administrator.");
             showAdminMenu();
         }
 
-        // 2. Check Newly Registered Passengers Dynamically
+        // Check newly registered passengers
         else if (userCredentialsMock.containsKey(email) && userCredentialsMock.get(email).equals(password)) {
             System.out.println("\nAuthentication Success! Logging in as Passenger.");
             showPassengerMenu();
         }
-
-        // 3. Fallback Error Handling
         else {
             System.out.println("\n[Error] Invalid email or password sequence.");
         }
@@ -224,9 +217,6 @@ public class Main {
         }
     }
 
-    /**
-     * Helper routine to catch non-integer user input anomalies securely.
-     */
     private static int promptForSafeInteger(String promptMessage) {
         while (true) {
             System.out.print(promptMessage);

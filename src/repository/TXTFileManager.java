@@ -7,26 +7,21 @@ import exception.FileProcessingException;
 import java.io.*;
 import java.util.ArrayList;
 
-/**
- * Text file implementation of the FileManager interface.
- * Handles reading and writing data records using comma-separated value formatting.
- */
 public class TXTFileManager implements FileManager {
 
     @Override
     public void saveData(Object data, String fileName) throws FileProcessingException {
-        // Enforce that incoming data structures must be valid Lists
         if (!(data instanceof ArrayList)) {
             throw new FileProcessingException("Data serialization failed: Expected an ArrayList type.");
         }
         
         ArrayList<?> list = (ArrayList<?>) data;
         
-        // Use try-with-resources to ensure data streams close automatically
+        // Use try to ensure data streams close automatically
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(fileName))) {
             for (Object obj : list) {
                 if (obj != null) {
-                    // Leverages the object's overridden toString() method directly
+                    // Uses the overridden toString() method
                     writer.write(obj.toString());
                     writer.newLine();
                 }
@@ -40,7 +35,7 @@ public class TXTFileManager implements FileManager {
     public Object loadData(String fileName) throws FileProcessingException {
         File file = new File(fileName);
         
-        // Graceful handling: If no data file exists yet, return an empty initialized collection
+        // If no file exists yet, return an empty collection
         if (!file.exists()) {
             if (fileName.toLowerCase().contains("trains")) {
                 return new ArrayList<Train>();
@@ -56,7 +51,7 @@ public class TXTFileManager implements FileManager {
                 ArrayList<Station> stations = new ArrayList<>();
                 while ((line = reader.readLine()) != null) {
                     String[] tokens = line.split(",");
-                    // Expects exactly 3 parameters: stationId, name, location
+                    // Needs 3 params: stationId, name, location
                     if (tokens.length == 3) {
                         stations.add(new Station(tokens[0].trim(), tokens[1].trim(), tokens[2].trim()));
                     }
@@ -67,7 +62,7 @@ public class TXTFileManager implements FileManager {
                 ArrayList<Train> trains = new ArrayList<>();
                 while ((line = reader.readLine()) != null) {
                     String[] tokens = line.split(",");
-                    // Expects exactly 3 parameters: trainId, trainName, capacity
+                    // Needs 3 params: trainId, trainName, capacity
                     if (tokens.length == 3) {
                         int capacity = Integer.parseInt(tokens[2].trim());
                         trains.add(new Train(tokens[0].trim(), tokens[1].trim(), capacity));
@@ -82,7 +77,7 @@ public class TXTFileManager implements FileManager {
             throw new FileProcessingException("Data corruption error: Parsing numeric values out of '" + fileName + "' failed.");
         }
         
-        // Return fallback safe instance if file type doesn't explicitly match predefined cases
+        // Return fallback if file type doesn't match other cases
         return new ArrayList<>();
     }
 }
