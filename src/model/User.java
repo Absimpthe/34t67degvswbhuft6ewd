@@ -8,12 +8,6 @@ public abstract class User {
     private String email;
     private String password;
     private UserRole role;
-
-
-    //No-argument constructor（因为后面可能要做fileI/O
-    public User(){
-
-    }
     
     public User(String userId , String name , String email, String password ,UserRole role ){
         this. userId = userId;
