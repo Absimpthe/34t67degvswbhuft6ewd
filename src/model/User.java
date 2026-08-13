@@ -1,6 +1,6 @@
 package model;
 import enums.UserRole;
-public class User {
+public abstract class User {
 
     private String userId;
     private String name;
@@ -63,7 +63,7 @@ public class User {
 
 
 
-    public void displayProfile() {
+    public void viewProfile() {
 
         System.out.println("User ID : " + userId);
         System.out.println("Name    : " + name);
