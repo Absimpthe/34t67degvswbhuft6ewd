@@ -1,5 +1,8 @@
 package enums;
 
-public class TicketType {
-
+// the available types of metro tickets
+public enum TicketType {
+    SINGLE,
+    DAILY,
+    MONTHLY
 }
