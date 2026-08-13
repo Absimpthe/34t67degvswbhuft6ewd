@@ -9,12 +9,8 @@ public class Passenger extends User {
     public Passenger() {
     }
 
-    public Passenger(String userId,
-                     String name,
-                     String email,
-                     String password,
-                     double balance) {
-
+    public Passenger(String userId,String name,String email,String password,double balance) {
+        //父类User
         super(userId, name, email, password, UserRole.PASSENGER);
         this.balance = balance;
     }
@@ -23,6 +19,7 @@ public class Passenger extends User {
         return balance;
     }
 
+    //provides controlled access to modify the private balance attribute.
     public void setBalance(double balance) {
         this.balance = balance;
     }
@@ -32,7 +29,8 @@ public class Passenger extends User {
         if (amount > 0) {
             balance += amount;
             System.out.println("Top up successful.");
-        } else {
+        } 
+        else {
             System.out.println("Invalid amount.");
         }
 
