@@ -2,18 +2,21 @@ package model;
 import enums.UserRole;
 public abstract class User {
 
+    //Encapsulaton封装
     private String userId;
     private String name;
     private String email;
     private String password;
     private UserRole role;
 
+
+    //No-argument constructor（因为后面可能要做fileI/O
     public User(){
 
     }
     
-    public User(String userID , String name , String email, String password ,UserRole role ){
-        this. userId = userID;
+    public User(String userId , String name , String email, String password ,UserRole role ){
+        this. userId = userId;
         this. name = name;
         this. email = email;
         this. password =password;
@@ -21,8 +24,9 @@ public abstract class User {
 
     }
 
+    //Getter
     public String getUserId(){
-        return userId;
+        return userId; 
     }
 
     public String getName(){
@@ -41,6 +45,7 @@ public abstract class User {
         return role;
     }
 
+    //setter
     public void setUserId(String userId) {
         this.userId = userId;
     }
@@ -69,5 +74,14 @@ public abstract class User {
         System.out.println("Name    : " + name);
         System.out.println("Email   : " + email);
         System.out.println("Role    : " + role);
+    }
+
+    public void editProfile(String name, String email) {
+    this.name = name;
+    this.email = email;
+}
+    
+    public boolean login(String email, String password) {
+    return this.email.equals(email) && this.password.equals(password);
     }
 }
