@@ -70,6 +70,7 @@ public abstract class User {
         System.out.println("Role    : " + role);
     }
 
+    //method
     public void editProfile(String name, String email) {
     this.name = name;
     this.email = email;
