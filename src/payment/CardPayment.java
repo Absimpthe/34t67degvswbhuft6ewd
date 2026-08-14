@@ -1,17 +1,20 @@
 package payment;
 
 public class CardPayment implements Payment{
+    //card number is private, so it is protected from changes
     private String cardNumber;
-
+    
     public String getCardNumber(){
       return cardNumber;
     }
+    //
     public CardPayment(String cardNumber){
       this.cardNumber = cardNumber;
     }  
-    
+    //validate card first, then changes, or otherwise
     @Override
     public boolean pay(double amount) {
+        //card validation
         if(cardNumber == null || cardNumber.trim().length() < 14){
            System.out.print("The card is not verified / Invalid card number. Payment Failed");
             return false;
