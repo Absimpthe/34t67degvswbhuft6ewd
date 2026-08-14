@@ -21,4 +21,9 @@ public class CardPayment implements Payment{
         System.out.println("Card payment successful.");
         return true;
     }
+
+    @Override 
+    public String getMethodName(){
+        return "Card";
+    }
 }
