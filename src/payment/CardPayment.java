@@ -16,6 +16,11 @@ public class CardPayment implements Payment{
            System.out.print("The card is not verified / Invalid card number. Payment Failed");
             return false;
         }  
+        if(amount <= 0 ){
+            System.out.println("Card payment failed: amount must be greater than RM0.00")
+            return false;
+        }
+        
         System.out.printf("Processing card payment of RM %.2f...%n", amount);
         System.out.println("Payment amount: RM " + amount);
         System.out.println("Card payment successful.");
