@@ -16,7 +16,6 @@ public class Passenger extends User {
         return balance;
     }
 
-    //provides controlled access to modify the private balance attribute.
     public void setBalance(double balance) {
         this.balance = balance;
     }
