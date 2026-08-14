@@ -1,5 +1,5 @@
 package payment;
-import model.passenger;
+import model.Passenger;
 
 public class EWalletPayment implements Payment {
     private Passenger passenger;
@@ -11,7 +11,7 @@ public class EWalletPayment implements Payment {
     }
 
     public boolean hasSufficientBalance(double amount) {
-        return passenger != null && passenger.getEwalletBalance() >= amount;
+        return passenger != null && passenger.getBalance() >= amount;
     }
 
     @Override
@@ -26,14 +26,14 @@ public class EWalletPayment implements Payment {
         }
         if (!hasSufficientBalance(amount)) {
             System.out.printf("E-Wallet payment declined. Required RM %.2f, available RM %.2f%n",
-                    amount, passenger.getEwalletBalance());
+                    amount, passenger.getBalance());
             return false;
         }
         System.out.println("E-Wallet connecting to " + provider + "...");
-        passenger.setBalance(passenger.getbalance() - amount);
+        passenger.setBalance(passenger.getBalance() - amount);
        
-        System.out.printf("[E-WALLET] RM %.2f. Remaining %s balance: RM %.2f .%n", amount,, provider.getLabel(), passenger.getBalance());
-        return false;
+        System.out.printf("[E-WALLET] RM %.2f. Remaining %s balance: RM %.2f .%n", amount, provider.getLabel(), passenger.getBalance());
+        return true;
     }
 
         @Override
