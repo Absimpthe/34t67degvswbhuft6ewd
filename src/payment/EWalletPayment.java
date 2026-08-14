@@ -30,8 +30,8 @@ public class EWalletPayment implements Payment {
             return false;
         }
         System.out.println("E-Wallet connecting to " + provider + "...");
-        boolean ok = passenger.deductEwallet(amount);
-        if (ok) {
+        boolean okPaid = passenger.deductEwallet(amount);
+        if (okPaid) {
             System.out.printf("[E-WALLET] RM %.2f paid. Remaining balance RM %.2f%n",
                     amount, passenger.getEwalletBalance());
         }
