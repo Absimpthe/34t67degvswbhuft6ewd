@@ -24,7 +24,7 @@ public class PaymentService {
 
         System.out.println("Invalid choice. Payment cancelled.");
         return false;
-
+  }
         public boolean processPayment(Payment payment, double amount, boolean confirmed) {
         if (payment == null) {
             System.out.println("No payment method selected.");
