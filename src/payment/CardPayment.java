@@ -16,9 +16,9 @@ public class CardPayment implements Payment{
            System.out.print("The card is not verified / Invalid card number. Payment Failed");
             return false;
         }  
-        System.out.printf("Processing cash payment of RM %.2f...%n", amount);
+        System.out.printf("Processing card payment of RM %.2f...%n", amount);
         System.out.println("Payment amount: RM " + amount);
-        System.out.println("Cash payment successful.");
+        System.out.println("Card payment successful.");
         return true;
     }
 }
