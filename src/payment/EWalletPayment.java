@@ -1,42 +1,43 @@
-package payment
+package payment;
 
-public EWalletPayment implements Payment{
-  public EWalletPayment(Passenger passenger, EWalletProvider provider){
-    this.passenger = passenger;
-    this.provider = provider;
-  }
-// i still thinking of what to use for payment pay figure
-  public boolean hasSufficientBalance(double amount){
-    return passenger != null && passenger.getEwalletBalance() >= amount;
-} 
-  @Override
-  public boolean pay(double amount){
-    if(amount <= 0){
-      System.out.print(" E-Wallet has invalid amount");
+public class EWalletPayment implements Payment {
+    private Passenger passenger;
+    private EWalletProvider provider;
+
+    public EWalletPayment(Passenger passenger, EWalletProvider provider) {
+        this.passenger = passenger;
+        this.provider = provider;
     }
 
-    if(!hasSufficientBalance(amount)){
-      System.out.printf(" E-Wallet Payment declined. Required RM %.2f, avaiable RM %.2f");
-      return false;
+    public boolean hasSufficientBalance(double amount) {
+        return passenger != null && passenger.getEwalletBalance() >= amount;
     }
-    // need to inheretance with pasenger
-    if(pas
-    System.out.println(" E-Wallet connecting to " + provider + "...");
+
+    @Override
+    public boolean pay(double amount) {
+        if (amount <= 0) {
+            System.out.println("E-Wallet: invalid amount.");
+            return false;
+        }
+        if (passenger == null) {
+            System.out.println("E-Wallet: no passenger linked.");
+            return false;
+        }
+        if (!hasSufficientBalance(amount)) {
+            System.out.printf("E-Wallet payment declined. Required RM %.2f, available RM %.2f%n",
+                    amount, passenger.getEwalletBalance());
+            return false;
+        }
+        System.out.println("E-Wallet connecting to " + provider + "...");
         boolean ok = passenger.deductEwallet(amount);
         if (ok) {
-            System.out.printf("  [E-WALLET] RM %.2f paid. Remaining %s balance RM %.2f.%n",
-                    amount, provider, passenger.getEwalletBalance());
+            System.out.printf("[E-WALLET] RM %.2f paid. Remaining balance RM %.2f%n",
+                    amount, passenger.getEwalletBalance());
         }
-        
-    return ok;
-    
-    @Override
-    public String getMethodName(){
-      return "E-Wallet (" + provider.getlabel() + ")";
+        return ok;
     }
 
     public EWalletProvider getProvider() {
-      return provider;
+        return provider;
     }
-
 }
