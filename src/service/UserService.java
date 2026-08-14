@@ -22,6 +22,7 @@ public class UserService {
     public User login(String userId, String password)
             throws InvalidLoginException {
 
+        //find uaer
         User user = users.get(userId);
 
         if (user == null) {
@@ -41,6 +42,7 @@ public class UserService {
 
     }
 
+    //getter
     public HashMap<String, User> getUsers() {
 
         return users;
