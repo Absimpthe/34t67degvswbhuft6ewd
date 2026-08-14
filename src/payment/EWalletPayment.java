@@ -1,4 +1,5 @@
 package payment;
+import model.passenger;
 
 public class EWalletPayment implements Payment {
     private Passenger passenger;
