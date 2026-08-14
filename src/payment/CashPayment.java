@@ -8,4 +8,10 @@ public class CashPayment implements Payment{
         System.out.println("Cash payment successful.");
         return true;
     }
+
+
+  @Override 
+  public String getMethodName(){
+      return "Cash";
+  }
 }
