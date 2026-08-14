@@ -30,15 +30,18 @@ public class EWalletPayment implements Payment {
             return false;
         }
         System.out.println("E-Wallet connecting to " + provider + "...");
-        boolean okPaid = passenger.deductEwallet(amount);
-        if (okPaid) {
-            System.out.printf("[E-WALLET] RM %.2f paid. Remaining balance RM %.2f%n",
-                    amount, passenger.getEwalletBalance());
-        }
-        return ok;
+        passenger.setBalance(passenger.getbalance() - amount);
+       
+        System.out.printf("[E-WALLET] RM %.2f. Remaining %s balance: RM %.2f .%n", amount,, provider.getLabel(), passenger.getBalance());
+        return false;
     }
 
-    public EWalletProvider getProvider() {
-        return provider;
-    }
+        @Override
+        public String getMethodName(){
+            return "E-Wallet (" + provider.getLabel() + ")";
+        }
+    
+        public EWalletProvider getProvider() {
+            return provider;
+        }
 }
