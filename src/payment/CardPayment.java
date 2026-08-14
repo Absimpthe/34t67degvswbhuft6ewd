@@ -20,7 +20,7 @@ public class CardPayment implements Payment{
             return false;
         }  
         if(amount <= 0 ){
-            System.out.println("Card payment failed: amount must be greater than RM0.00")
+            System.out.println("Card payment failed: amount must be greater than RM0.00");
             return false;
         }
         
