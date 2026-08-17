@@ -5,6 +5,7 @@ public class CashPayment implements Payment{
     public boolean pay(double amount) {
         if(amount <= 0){
           System.out.print("Not valid.");
+          return false;
         }
       
         System.out.printf("Processing cash payment of RM %.2f...%n", amount);
