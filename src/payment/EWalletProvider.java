@@ -5,7 +5,7 @@ public enum EWalletProvider {
     TOUCH_N_GO("Touch 'n Go eWallet"),
     GRABPAY("GrabPay"),
     BOOST("Boost"),
-    SHOPEEPAY("ShopePay");
+    SHOPEEPAY("ShopeePay");
 
     private final String label;
     //label name for provider
