@@ -138,8 +138,7 @@ public class Main {
     // ---------------- authentication ----------------
 
     private static void handleLogin() {
-        System.out.print("Enter Registered Email: ");
-        String email = scanner.nextLine().trim();
+    	String email = promptForValidEmail("Enter Email: ");
         System.out.print("Enter Password: ");
         String password = scanner.nextLine().trim();
 
@@ -161,8 +160,7 @@ public class Main {
         System.out.println("\n--- PASSENGER REGISTRATION ---");
         System.out.print("Enter Full Name: ");
         String name = scanner.nextLine().trim();
-        System.out.print("Enter Email Address: ");
-        String email = scanner.nextLine().trim().toLowerCase();
+        String email = promptForValidEmail("Enter Email: ");
         System.out.print("Create Password: ");
         String password = scanner.nextLine().trim();
 
@@ -412,6 +410,39 @@ public class Main {
     }
 
     // input helpers
+    
+    private static boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+
+        int atIndex = email.indexOf('@');
+        int lastAtIndex = email.lastIndexOf('@');
+
+        if (atIndex <= 0 || atIndex != lastAtIndex || atIndex == email.length() - 1) {
+            return false;
+        }
+
+        int dotIndex = email.indexOf('.', atIndex);
+        if (dotIndex <= atIndex + 1 || dotIndex == email.length() - 1) {
+            return false;
+        }
+
+        return true;
+    }
+    
+    private static String promptForValidEmail(String promptMessage) {
+        while (true) {
+            System.out.print(promptMessage);
+            String email = scanner.nextLine().trim().toLowerCase();
+
+            if (isValidEmail(email)) {
+                return email;
+            }
+
+            System.out.println("[Error] Please enter a valid email address.");
+        }
+    }
 
     private static int promptForSafeInteger(String promptMessage) {
         while (true) {

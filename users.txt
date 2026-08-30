@@ -1,3 +1,3 @@
-admin@metro.com,Admin User,admin@metro.com,admin123,ADMIN,0.0
 alice@example.com,Alice Example,alice@example.com,alicepwd,PASSENGER,50.25
-bob@example.com,Bob Sample,bob@example.com,bobpwd,PASSENGER,15.00
+bob@example.com,Bob Sample,bob@example.com,bobpwd,PASSENGER,15.0
+admin@metro.com,Admin User,admin@metro.com,admin123,ADMIN,0.0
