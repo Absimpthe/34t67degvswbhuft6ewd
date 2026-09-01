@@ -105,9 +105,15 @@ public class Main {
             System.out.println("[Warning] File restore bypassed: " + e.getMessage());
         }
 
-        // guarantee there is always an admin account to log in with
-        if (userService.findUser(DEFAULT_ADMIN_EMAIL) == null) {
-            userService.register(new Admin(DEFAULT_ADMIN_EMAIL, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
+        if (userService.findUserByEmail(DEFAULT_ADMIN_EMAIL) == null) {
+            userService.register(
+                new Admin(
+                    userService.generateAdminId(),
+                    "System Admin",
+                    DEFAULT_ADMIN_EMAIL,
+                    DEFAULT_ADMIN_PASSWORD
+                )
+            );
         }
     }
 
@@ -138,7 +144,7 @@ public class Main {
     // ---------------- authentication ----------------
 
     private static void handleLogin() {
-    	String email = promptForValidEmail("Enter Email: ");
+        String email = promptForValidEmail("Enter Email: ");
         System.out.print("Enter Password: ");
         String password = scanner.nextLine().trim();
 
@@ -169,14 +175,14 @@ public class Main {
             return;
         }
 
-        if (userService.findUser(email) != null) {
+        if (userService.findUserByEmail(email) != null) {
             System.out.println("[Error] Registration failed: Email is already registered.");
             return;
         }
 
-        // email doubles as both the login ID and the HashMap key
-        userService.register(new Passenger(email, name, email, password, 0.0));
-        System.out.println("Registration successful! You may now log in as " + name + ".");
+        String userId = userService.generatePassengerId();
+        userService.register(new Passenger(userId, name, email, password, 0.0));
+        System.out.println("Registration successful! Your User ID is " + userId + ". You may now log in as " + name + ".");
     }
 
     // ---------------- admin menu ----------------
@@ -394,8 +400,6 @@ public class Main {
                 return;
         }
 
-        // TicketService checks the wallet balance, calculates the fare via
-        // FareCalculator, deducts it, and prints/creates the ticket.
         ticketService.buyTicket(passenger, route, ticketType);
     }
 
@@ -410,7 +414,7 @@ public class Main {
     }
 
     // input helpers
-    
+
     private static boolean isValidEmail(String email) {
         if (email == null || email.isBlank()) {
             return false;
@@ -430,7 +434,7 @@ public class Main {
 
         return true;
     }
-    
+
     private static String promptForValidEmail(String promptMessage) {
         while (true) {
             System.out.print(promptMessage);
