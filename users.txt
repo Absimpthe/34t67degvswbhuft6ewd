@@ -1,4 +1,4 @@
 PS002,Bob Sample,bob@example.com,bobpwd,PASSENGER,15.0
 PS001,Alice Example,alice@example.com,alicepwd,PASSENGER,50.25
-AD001,Admin User,admin@metro.com,admin123,ADMIN,0.0
 PS003,Charlie Test,charlie@test.com,charliepwd,PASSENGER,0.0
+AD000,System Admin,admin@metro.com,admin123,ADMIN,0.0

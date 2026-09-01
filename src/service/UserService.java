@@ -46,13 +46,13 @@ public class UserService {
         return null;
     }
 
-    private int getMaxNumericId(String prefix) {
+    private int getMaxPassengerNumericId() {
         int max = -1;
 
         for (User user : users.values()) {
             String id = user.getUserId();
-            if (id != null && id.startsWith(prefix)) {
-                String numberPart = id.substring(prefix.length());
+            if (id != null && id.startsWith("PS")) {
+                String numberPart = id.substring(2);
                 try {
                     int value = Integer.parseInt(numberPart);
                     if (value > max) {
@@ -67,18 +67,12 @@ public class UserService {
     }
 
     public String generatePassengerId() {
-        int next = getMaxNumericId("PS") + 1;
+        int next = getMaxPassengerNumericId() + 1;
         return String.format("PS%03d", next);
     }
 
-    public String generateAdminId() {
-        int next = getMaxNumericId("AD") + 1;
-        return String.format("AD%03d", next);
-    }
-
-    //getter
+    // getter
     public HashMap<String, User> getUsers() {
         return users;
     }
-
 }

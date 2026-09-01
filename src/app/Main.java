@@ -36,6 +36,7 @@ public class Main {
     private static final String ROUTES_FILE = "routes.txt";
     private static final String TICKETS_FILE = "tickets.txt";
 
+    private static final String DEFAULT_ADMIN_ID = "AD000";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@metro.com";
     private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
 
@@ -105,15 +106,14 @@ public class Main {
             System.out.println("[Warning] File restore bypassed: " + e.getMessage());
         }
 
-        if (userService.findUserByEmail(DEFAULT_ADMIN_EMAIL) == null) {
-            userService.register(
-                new Admin(
-                    userService.generateAdminId(),
-                    "System Admin",
-                    DEFAULT_ADMIN_EMAIL,
-                    DEFAULT_ADMIN_PASSWORD
-                )
-            );
+        // guarantee there is always a single admin account to log in with
+        if (userService.findUser(DEFAULT_ADMIN_ID) == null) {
+            userService.register(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
+            try {
+                fileManager.saveData(new ArrayList<User>(userService.getUsers().values()), USERS_FILE);
+            } catch (FileProcessingException e) {
+                System.out.println("[Warning] Could not save default admin immediately: " + e.getMessage());
+            }
         }
     }
 
@@ -303,7 +303,7 @@ public class Main {
         routeService.addRoute(new Route(routeId, source, destination, distance));
     }
 
-    // passenger menu
+    // ---------------- passenger menu ----------------
 
     private static void showPassengerMenu(Passenger passenger) {
         boolean inPassengerMenu = true;
@@ -413,7 +413,7 @@ public class Main {
         }
     }
 
-    // input helpers
+    // ---------------- input helpers ----------------
 
     private static boolean isValidEmail(String email) {
         if (email == null || email.isBlank()) {
