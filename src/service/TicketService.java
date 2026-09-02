@@ -31,6 +31,7 @@ public class TicketService {
 
     public void setTickets(ArrayList<Ticket> tickets) {
         this.tickets = tickets;
+        updateTicketCounter();
     }
 
     // method to handle buying a new ticket
@@ -122,5 +123,24 @@ public class TicketService {
         for (int i = 0; i < tickets.size(); i++) {
             tickets.get(i).displayTicket();
         }
+    }
+    
+    private void updateTicketCounter() {
+        int max = 1000;
+
+        for (Ticket ticket : tickets) {
+            String id = ticket.getTicketId();
+            if (id != null && id.startsWith("T")) {
+                try {
+                    int value = Integer.parseInt(id.substring(1));
+                    if (value > max) {
+                        max = value;
+                    }
+                } catch (NumberFormatException ignored) {
+                }
+            }
+        }
+
+        this.ticketCounter = max + 1;
     }
 }
