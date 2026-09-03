@@ -6,12 +6,14 @@ public class Route {
     private Station source;
     private Station destination;
     private double distanceKm;
+    private Train train;
 
-    public Route(String routeId, Station source, Station destination, double distanceKm) {
+    public Route(String routeId, Station source, Station destination, double distanceKm, Train train) {
         this.routeId = routeId;
         this.source = source;
         this.destination = destination;
         this.distanceKm = distanceKm;
+        this.train = train;
     }
 
     public String getRouteId() {
@@ -30,6 +32,10 @@ public class Route {
         return distanceKm;
     }
 
+    public Train getTrain() {
+        return train;
+    }
+
     public void setRouteId(String routeId) {
         this.routeId = routeId;
     }
@@ -46,21 +52,20 @@ public class Route {
         this.distanceKm = distanceKm;
     }
 
-    // calc distance (need to replace?)
-    public double calculateDistance() {
-        return distanceKm;
+    public void setTrain(Train train) {
+        this.train = train;
     }
 
-    public void displayRoute() {
-        System.out.println("Route ID     : " + routeId);
-        System.out.println("Source       : " + source.getName());
-        System.out.println("Destination  : " + destination.getName());
-        System.out.println("Distance(km) : " + distanceKm);
+    public void displayInfo() {
+        System.out.println("Route ID    : " + routeId);
+        System.out.println("Source      : " + source.getName());
+        System.out.println("Destination : " + destination.getName());
+        System.out.println("Distance    : " + distanceKm + " km");
+        System.out.println("Train       : " + (train != null ? train.getTrainName() + " (" + train.getTrainId() + ")" : "None"));
     }
 
-    // store trains by ID
     @Override
     public String toString() {
-        return routeId + "," + source.getStationId() + "," + destination.getStationId() + "," + distanceKm;
+        return routeId + "," + source.getStationId() + "," + destination.getStationId() + "," + distanceKm + "," + (train != null ? train.getTrainId() : "");
     }
 }

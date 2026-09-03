@@ -97,23 +97,21 @@ public class Main {
                 userService.register(u);
             }
 
-            routeService.getRoutes().addAll(fileManager.loadRoutes(ROUTES_FILE, stationService.getStations()));
+            routeService.setRoutes(
+                fileManager.loadRoutes(ROUTES_FILE, stationService.getStations(), trainService.getTrains())
+            );
 
-            ticketService.setTickets(fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes()));
+            ticketService.setTickets(
+                fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes())
+            );
 
             System.out.println("[System Initialization] Local database files mapped successfully.");
         } catch (FileProcessingException e) {
             System.out.println("[Warning] File restore bypassed: " + e.getMessage());
         }
 
-        // guarantee there is always a single admin account to log in with
         if (userService.findUser(DEFAULT_ADMIN_ID) == null) {
             userService.register(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
-            try {
-                fileManager.saveData(new ArrayList<User>(userService.getUsers().values()), USERS_FILE);
-            } catch (FileProcessingException e) {
-                System.out.println("[Warning] Could not save default admin immediately: " + e.getMessage());
-            }
         }
     }
 
@@ -311,7 +309,30 @@ public class Main {
             return;
         }
 
-        routeService.addRoute(new Route(routeId, source, destination, distance));
+        if (trainService.getTrains().isEmpty()) {
+            System.out.println("[Error] No trains available. Add a train first.");
+            return;
+        }
+
+        System.out.println("\nAvailable Trains:");
+        trainService.viewTrains();
+
+        System.out.print("Enter Train ID to assign to this route: ");
+        String trainId = scanner.nextLine().trim();
+        Train assignedTrain = null;
+        for (Train train : trainService.getTrains()) {
+            if (train.getTrainId().equalsIgnoreCase(trainId)) {
+                assignedTrain = train;
+                break;
+            }
+        }
+
+        if (assignedTrain == null) {
+            System.out.println("[Error] Train not found.");
+            return;
+        }
+
+        routeService.addRoute(new Route(routeId, source, destination, distance, assignedTrain));
     }
 
     // ---------------- passenger menu ----------------
