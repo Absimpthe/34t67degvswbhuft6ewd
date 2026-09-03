@@ -346,26 +346,37 @@ public class Main {
             System.out.println("1. View Profile");
             System.out.println("2. Top Up Balance");
             System.out.println("3. Buy Ticket");
-            System.out.println("4. Cancel Ticket");
-            System.out.println("5. View My Tickets");
-            System.out.println("6. Logout");
-            System.out.print("Choose Passenger Operation: ");
+            System.out.println("4. Use Ticket");
+            System.out.println("5. Cancel Ticket");
+            System.out.println("6. View My Tickets");
+            System.out.println("7. Logout");
 
             switch (scanner.nextLine().trim()) {
                 case "1":
                     passenger.viewProfile();
                     System.out.println("Balance : RM " + String.format("%.2f", passenger.getBalance()));
                     break;
-                case "2": passengerTopUp(passenger); break;
-                case "3": passengerBuyTicket(passenger); break;
-                case "4": passengerCancelTicket(); break;
-                case "5": ticketService.viewPassengerTickets(passenger.getUserId()); break;
+                case "2": 
+                	passengerTopUp(passenger); 
+                	break;
+                case "3": 
+                	passengerBuyTicket(passenger); 
+                	break;
+                case "4":
+                    passengerUseTicket(passenger);
+                    break;
+                case "5":
+                    passengerCancelTicket(passenger);
+                    break;
                 case "6":
+                    ticketService.viewPassengerTickets(passenger.getUserId());
+                    break;
+                case "7":
                     System.out.println("Logging out.");
                     inPassengerMenu = false;
                     break;
                 default:
-                    System.out.println("Invalid action selection. Choose an option from 1 to 6.");
+                    System.out.println("Invalid action selection. Choose an option from 1 to 7.");
             }
         }
     }
@@ -420,6 +431,10 @@ public class Main {
             System.out.println("[Error] No route exists between these two stations.");
             return;
         }
+        
+        System.out.println("Assigned Train: " + (route.getTrain() != null
+                ? route.getTrain().getTrainName() + " (" + route.getTrain().getTrainId() + ")"
+                : "None"));
 
         System.out.println("Select Ticket Type: 1. Single  2. Daily  3. Monthly");
         TicketType ticketType;
@@ -435,11 +450,22 @@ public class Main {
         ticketService.buyTicket(passenger, route, ticketType);
     }
 
-    private static void passengerCancelTicket() {
+    private static void passengerCancelTicket(Passenger passenger) {
         System.out.print("\nEnter Ticket ID to Cancel: ");
         String ticketId = scanner.nextLine().trim();
         try {
-            ticketService.cancelTicket(ticketId);
+            ticketService.cancelTicket(ticketId, passenger.getUserId());
+        } catch (TicketNotFoundException e) {
+            System.out.println("[Error] " + e.getMessage());
+        }
+    }
+    
+    private static void passengerUseTicket(Passenger passenger) {
+        System.out.print("\nEnter Ticket ID to Mark as Used: ");
+        String ticketId = scanner.nextLine().trim();
+
+        try {
+            ticketService.useTicket(ticketId, passenger.getUserId());
         } catch (TicketNotFoundException e) {
             System.out.println("[Error] " + e.getMessage());
         }

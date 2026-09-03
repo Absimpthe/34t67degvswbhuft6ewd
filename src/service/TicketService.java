@@ -59,12 +59,44 @@ public class TicketService {
 
         return newTicket;
     }
-
-    // to cancel an existing ticket
-    public void cancelTicket(String ticketId) throws TicketNotFoundException {
+    
+    public void useTicket(String ticketId, String passengerUserId) throws TicketNotFoundException {
         Ticket targetTicket = null;
 
-        // here it loops through tickets list to find the matching Ticket ID
+        for (Ticket t : tickets) {
+            if (t.getTicketId().equalsIgnoreCase(ticketId)) {
+                targetTicket = t;
+                break;
+            }
+        }
+
+        if (targetTicket == null) {
+            throw new TicketNotFoundException("Error: Ticket ID " + ticketId + " was not found.");
+        }
+
+        if (!targetTicket.getPassenger().getUserId().equalsIgnoreCase(passengerUserId)) {
+            System.out.println("You can only use your own ticket.");
+            return;
+        }
+
+        if (targetTicket.getStatus() == TicketStatus.CANCELLED) {
+            System.out.println("Ticket ID " + ticketId + " is cancelled and cannot be used.");
+            return;
+        }
+
+        if (targetTicket.getStatus() == TicketStatus.USED) {
+            System.out.println("Ticket ID " + ticketId + " has already been used.");
+            return;
+        }
+
+        targetTicket.setStatus(TicketStatus.USED);
+        System.out.println("Ticket ID " + ticketId + " has been marked as USED.");
+    }
+
+    // to cancel an existing ticket
+    public void cancelTicket(String ticketId, String passengerUserId) throws TicketNotFoundException {
+        Ticket targetTicket = null;
+
         for (int i = 0; i < tickets.size(); i++) {
             Ticket t = tickets.get(i);
             if (t.getTicketId().equalsIgnoreCase(ticketId)) {
@@ -73,22 +105,28 @@ public class TicketService {
             }
         }
 
-        // throw the exception if ticket ID doesn't exist
         if (targetTicket == null) {
             throw new TicketNotFoundException("Error: Ticket ID " + ticketId + " was not found.");
         }
 
-        // first check if ticket was already cancelled
+        if (!targetTicket.getPassenger().getUserId().equalsIgnoreCase(passengerUserId)) {
+            System.out.println("You can only cancel your own ticket.");
+            return;
+        }
+
+        if (targetTicket.getStatus() == TicketStatus.USED) {
+            System.out.println("Ticket ID " + ticketId + " has already been used and cannot be cancelled.");
+            return;
+        }
+
         if (targetTicket.getStatus() == TicketStatus.CANCELLED) {
             System.out.println("Ticket ID " + ticketId + " is already cancelled.");
             return;
         }
 
-        // then return money back to passenger balance
         Passenger passenger = targetTicket.getPassenger();
         passenger.setBalance(passenger.getBalance() + targetTicket.getFareAmount());
 
-        // updates ticket status to CANCELLED
         targetTicket.setStatus(TicketStatus.CANCELLED);
         System.out.println("Ticket ID " + ticketId + " has been successfully cancelled.");
         System.out.println("Refund of RM " + String.format("%.2f", targetTicket.getFareAmount()) + " has been credited back to passenger balance.");
