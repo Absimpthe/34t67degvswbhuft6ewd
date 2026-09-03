@@ -277,6 +277,12 @@ public class Main {
             System.out.println("[Error] Fields cannot be left empty.");
             return;
         }
+
+        if (capacity < 0) {
+            System.out.println("[Error] Train capacity cannot be negative.");
+            return;
+        }
+
         trainService.addTrain(new Train(id, name, capacity));
     }
 
@@ -300,6 +306,11 @@ public class Main {
         }
 
         double distance = promptForSafeDouble("Distance (km): ");
+        if (distance < 0) {
+            System.out.println("[Error] Route distance cannot be negative.");
+            return;
+        }
+
         routeService.addRoute(new Route(routeId, source, destination, distance));
     }
 

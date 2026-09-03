@@ -1,3 +1,4 @@
 S001,Downtown Central,Central District
 S002,Eastside Station,East District
+S004,Rainbow Park,Rainbow City
 S003,West End,West District
