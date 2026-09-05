@@ -20,6 +20,7 @@ import exception.InvalidLoginException;
 import exception.TicketNotFoundException;
 import payment.CardPayment;
 import payment.CashPayment;
+import payment.EWalletProvider;
 import payment.Payment;
 import enums.TicketType;
 

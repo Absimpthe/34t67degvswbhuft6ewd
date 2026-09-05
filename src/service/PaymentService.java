@@ -1,47 +1,49 @@
 package service;
 import payment.Payment;
-import java.util.*;
+
 
 public class PaymentService {
-  public boolean processPayment(Payment payment, double amount) {
-        Scanner choice = new Scanner(System.in);
+
+    private int successfulTransactions = 0;
+    private int failedTransactions = 0;
+    private double totalCollected = 0.0;
+
+    public boolean processPayment(Payment payment, double amount) {
         if (payment == null) {
             System.out.println("No payment method selected.");
+            failedTransactions++;
             return false;
         }
 
-        System.out.println("Would you like to proceed with the payment? (Y/N)");
-        String userChoice = choice.nextLine().toUpperCase();
-
-        if (userChoice.equalsIgnoreCase("Y")) {
-            return processPayment(payment, amount, true);
-        }
-
-        if (userChoice.equalsIgnoreCase("N")) {
-            System.out.println("Payment cancelled.");
+        if (amount <= 0) {
+            System.out.println("Amount must be greater than zero.");
+            failedTransactions++;
             return false;
         }
 
-        System.out.println("Invalid choice. Payment cancelled.");
-        return false;
-  }
-        public boolean processPayment(Payment payment, double amount, boolean confirmed) {
-        if (payment == null) {
-            System.out.println("No payment method selected.");
-            return false;
-        }
-        if (!confirmed) {
-            System.out.println("Payment cancelled.");
-            return false;
-        }
- 
-        boolean success = payment.pay(amount);
- 
+        boolean success = payment.pay(amount);   // dynamic dispatch
+
         if (success) {
+            successfulTransactions++;
+            totalCollected += amount;
             System.out.printf("Transaction complete via %s.%n", payment.getMethodName());
         } else {
+            failedTransactions++;
             System.out.println("Transaction failed. Please choose another payment method.");
         }
         return success;
+    }
+    // ↑ processPayment ENDS here. Everything below is class level.
+
+    public int getSuccessfulTransactions() {
+        return successfulTransactions;
+    }
+
+    public int getFailedTransactions() {
+        return failedTransactions;
+    }
+
+    public double getTotalCollected() {
+        return totalCollected;
     }
 }
