@@ -8,7 +8,7 @@ public class StationService {
     // needed to store stations
     private ArrayList<Station> stations;
 
-    // initialize new list (replace later with file)
+    // initialize new list
     public StationService() {
         this.stations = new ArrayList<>();
     }

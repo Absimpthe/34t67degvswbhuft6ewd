@@ -2,7 +2,6 @@ package model;
 import enums.UserRole;
 public abstract class User {
 
-    //Encapsulaton封装
     private String userId;
     private String name;
     private String email;
@@ -18,7 +17,6 @@ public abstract class User {
 
     }
 
-    //Getter
     public String getUserId(){
         return userId; 
     }

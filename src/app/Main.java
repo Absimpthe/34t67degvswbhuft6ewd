@@ -37,6 +37,7 @@ public class Main {
     private static final String ROUTES_FILE = "routes.txt";
     private static final String TICKETS_FILE = "tickets.txt";
 
+    private static final String DEFAULT_ADMIN_ID = "AD000";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@metro.com";
     private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
 
@@ -94,21 +95,24 @@ public class Main {
             trainService.setTrains(loadedTrains);
 
             for (User u : fileManager.loadUsers(USERS_FILE)) {
-                userService.register(u);
+                userService.registerUser(u);
             }
 
-            routeService.getRoutes().addAll(fileManager.loadRoutes(ROUTES_FILE, stationService.getStations()));
+            routeService.setRoutes(
+                fileManager.loadRoutes(ROUTES_FILE, stationService.getStations(), trainService.getTrains())
+            );
 
-            ticketService.setTickets(fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes()));
+            ticketService.setTickets(
+                fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes())
+            );
 
             System.out.println("[System Initialization] Local database files mapped successfully.");
         } catch (FileProcessingException e) {
             System.out.println("[Warning] File restore bypassed: " + e.getMessage());
         }
 
-        // guarantee there is always an admin account to log in with
-        if (userService.findUser(DEFAULT_ADMIN_EMAIL) == null) {
-            userService.register(new Admin(DEFAULT_ADMIN_EMAIL, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
+        if (userService.findUser(DEFAULT_ADMIN_ID) == null) {
+            userService.registerUser(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
         }
     }
 
@@ -139,8 +143,7 @@ public class Main {
     // ---------------- authentication ----------------
 
     private static void handleLogin() {
-        System.out.print("Enter Registered Email: ");
-        String email = scanner.nextLine().trim();
+        String email = promptForValidEmail("Enter Email: ");
         System.out.print("Enter Password: ");
         String password = scanner.nextLine().trim();
 
@@ -162,8 +165,7 @@ public class Main {
         System.out.println("\n--- PASSENGER REGISTRATION ---");
         System.out.print("Enter Full Name: ");
         String name = scanner.nextLine().trim();
-        System.out.print("Enter Email Address: ");
-        String email = scanner.nextLine().trim().toLowerCase();
+        String email = promptForValidEmail("Enter Email: ");
         System.out.print("Create Password: ");
         String password = scanner.nextLine().trim();
 
@@ -172,14 +174,14 @@ public class Main {
             return;
         }
 
-        if (userService.findUser(email) != null) {
+        if (userService.findUserByEmail(email) != null) {
             System.out.println("[Error] Registration failed: Email is already registered.");
             return;
         }
 
-        // email doubles as both the login ID and the HashMap key
-        userService.register(new Passenger(email, name, email, password, 0.0));
-        System.out.println("Registration successful! You may now log in as " + name + ".");
+        String userId = userService.generatePassengerId();
+        userService.registerUser(new Passenger(userId, name, email, password, 0.0));
+        System.out.println("Registration successful! Your User ID is " + userId + ". You may now log in as " + name + ".");
     }
 
     // ---------------- admin menu ----------------
@@ -199,8 +201,9 @@ public class Main {
             System.out.println("7. Create Route");
             System.out.println("8. View Routes");
             System.out.println("9. View All Tickets");
-            System.out.println("10. Generate Report");
-            System.out.println("11. Logout");
+            System.out.println("10. Sort Tickets by Status");
+            System.out.println("11. Generate Report");
+            System.out.println("12. Logout");
             System.out.print("Choose Administrative Operation: ");
 
             switch (scanner.nextLine().trim()) {
@@ -212,16 +215,49 @@ public class Main {
                 case "6": trainService.viewTrains(); break;
                 case "7": adminCreateRoute(); break;
                 case "8": routeService.viewRoutes(); break;
-                case "9": ticketService.viewAllTickets(); break;
-                case "10": reportService.generateReport(ticketService.getTickets()); break;
-                case "11":
+                case "9": ticketService.viewTickets(); break;
+                case "10": adminSortTicketsByStatus(); break;
+                case "11": reportService.generateReport(ticketService.getTickets()); break;
+                case "12":
                     System.out.println("Logging out of Admin Portal.");
                     inAdminMenu = false;
                     break;
                 default:
-                    System.out.println("Invalid action selection. Choose an option from 1 to 11.");
+                    System.out.println("Invalid action selection. Choose an option from 1 to 12.");
             }
         }
+    }
+    
+    private static void adminSortTicketsByStatus() {
+        ArrayList<Ticket> tickets = ticketService.getTickets();
+
+        if (tickets.isEmpty()) {
+            System.out.println("No tickets available to sort.");
+            return;
+        }
+
+        Collections.sort(tickets, new Comparator<Ticket>() {
+            @Override
+            public int compare(Ticket t1, Ticket t2) {
+                return Integer.compare(statusRank(t1), statusRank(t2));
+            }
+
+            private int statusRank(Ticket ticket) {
+                if (ticket.getStatus() == enums.TicketStatus.ACTIVE) {
+                    return 1;
+                }
+                if (ticket.getStatus() == enums.TicketStatus.USED) {
+                    return 2;
+                }
+                if (ticket.getStatus() == enums.TicketStatus.CANCELLED) {
+                    return 3;
+                }
+                return 4;
+            }
+        });
+
+        System.out.println("Tickets sorted by status: ACTIVE, USED, CANCELLED");
+        ticketService.viewTickets();
     }
 
     private static void adminAddStation() {
@@ -274,6 +310,12 @@ public class Main {
             System.out.println("[Error] Fields cannot be left empty.");
             return;
         }
+
+        if (capacity < 0) {
+            System.out.println("[Error] Train capacity cannot be negative.");
+            return;
+        }
+
         trainService.addTrain(new Train(id, name, capacity));
     }
 
@@ -297,10 +339,38 @@ public class Main {
         }
 
         double distance = promptForSafeDouble("Distance (km): ");
-        routeService.addRoute(new Route(routeId, source, destination, distance));
+        if (distance < 0) {
+            System.out.println("[Error] Route distance cannot be negative.");
+            return;
+        }
+
+        if (trainService.getTrains().isEmpty()) {
+            System.out.println("[Error] No trains available. Add a train first.");
+            return;
+        }
+
+        System.out.println("\nAvailable Trains:");
+        trainService.viewTrains();
+
+        System.out.print("Enter Train ID to assign to this route: ");
+        String trainId = scanner.nextLine().trim();
+        Train assignedTrain = null;
+        for (Train train : trainService.getTrains()) {
+            if (train.getTrainId().equalsIgnoreCase(trainId)) {
+                assignedTrain = train;
+                break;
+            }
+        }
+
+        if (assignedTrain == null) {
+            System.out.println("[Error] Train not found.");
+            return;
+        }
+
+        routeService.addRoute(new Route(routeId, source, destination, distance, assignedTrain));
     }
 
-    // passenger menu
+    // ---------------- passenger menu ----------------
 
     private static void showPassengerMenu(Passenger passenger) {
         boolean inPassengerMenu = true;
@@ -311,26 +381,37 @@ public class Main {
             System.out.println("1. View Profile");
             System.out.println("2. Top Up Balance");
             System.out.println("3. Buy Ticket");
-            System.out.println("4. Cancel Ticket");
-            System.out.println("5. View My Tickets");
-            System.out.println("6. Logout");
-            System.out.print("Choose Passenger Operation: ");
+            System.out.println("4. Use Ticket");
+            System.out.println("5. Cancel Ticket");
+            System.out.println("6. View My Tickets");
+            System.out.println("7. Logout");
 
             switch (scanner.nextLine().trim()) {
                 case "1":
                     passenger.viewProfile();
                     System.out.println("Balance : RM " + String.format("%.2f", passenger.getBalance()));
                     break;
-                case "2": passengerTopUp(passenger); break;
-                case "3": passengerBuyTicket(passenger); break;
-                case "4": passengerCancelTicket(); break;
-                case "5": ticketService.viewPassengerTickets(passenger.getUserId()); break;
+                case "2": 
+                	passengerTopUp(passenger); 
+                	break;
+                case "3": 
+                	passengerBuyTicket(passenger); 
+                	break;
+                case "4":
+                    passengerUseTicket(passenger);
+                    break;
+                case "5":
+                    passengerCancelTicket(passenger);
+                    break;
                 case "6":
+                    ticketService.viewPassengerTickets(passenger.getUserId());
+                    break;
+                case "7":
                     System.out.println("Logging out.");
                     inPassengerMenu = false;
                     break;
                 default:
-                    System.out.println("Invalid action selection. Choose an option from 1 to 6.");
+                    System.out.println("Invalid action selection. Choose an option from 1 to 7.");
             }
         }
     }
@@ -385,6 +466,10 @@ public class Main {
             System.out.println("[Error] No route exists between these two stations.");
             return;
         }
+        
+        System.out.println("Assigned Train: " + (route.getTrain() != null
+                ? route.getTrain().getTrainName() + " (" + route.getTrain().getTrainId() + ")"
+                : "None"));
 
         System.out.println("Select Ticket Type: 1. Single  2. Daily  3. Monthly");
         TicketType ticketType;
@@ -397,22 +482,64 @@ public class Main {
                 return;
         }
 
-        // TicketService checks the wallet balance, calculates the fare via
-        // FareCalculator, deducts it, and prints/creates the ticket.
         ticketService.buyTicket(passenger, route, ticketType);
     }
 
-    private static void passengerCancelTicket() {
+    private static void passengerCancelTicket(Passenger passenger) {
         System.out.print("\nEnter Ticket ID to Cancel: ");
         String ticketId = scanner.nextLine().trim();
         try {
-            ticketService.cancelTicket(ticketId);
+            ticketService.cancelTicket(ticketId, passenger.getUserId());
+        } catch (TicketNotFoundException e) {
+            System.out.println("[Error] " + e.getMessage());
+        }
+    }
+    
+    private static void passengerUseTicket(Passenger passenger) {
+        System.out.print("\nEnter Ticket ID to Mark as Used: ");
+        String ticketId = scanner.nextLine().trim();
+
+        try {
+            ticketService.useTicket(ticketId, passenger.getUserId());
         } catch (TicketNotFoundException e) {
             System.out.println("[Error] " + e.getMessage());
         }
     }
 
-    // input helpers
+    // ---------------- input helpers ----------------
+
+    private static boolean isValidEmail(String email) {
+        if (email == null || email.isBlank()) {
+            return false;
+        }
+
+        int atIndex = email.indexOf('@');
+        int lastAtIndex = email.lastIndexOf('@');
+
+        if (atIndex <= 0 || atIndex != lastAtIndex || atIndex == email.length() - 1) {
+            return false;
+        }
+
+        int dotIndex = email.indexOf('.', atIndex);
+        if (dotIndex <= atIndex + 1 || dotIndex == email.length() - 1) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private static String promptForValidEmail(String promptMessage) {
+        while (true) {
+            System.out.print(promptMessage);
+            String email = scanner.nextLine().trim().toLowerCase();
+
+            if (isValidEmail(email)) {
+                return email;
+            }
+
+            System.out.println("[Error] Please enter a valid email address.");
+        }
+    }
 
     private static int promptForSafeInteger(String promptMessage) {
         while (true) {

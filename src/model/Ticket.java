@@ -84,6 +84,9 @@ public class Ticket {
         System.out.println("Passenger    : " + passenger.getName());
         System.out.println("From Station : " + route.getSource().getName());
         System.out.println("To Station   : " + route.getDestination().getName());
+        System.out.println("Assigned Train : " + (route.getTrain() != null
+                ? route.getTrain().getTrainName() + " (" + route.getTrain().getTrainId() + ")"
+                : "None"));
         System.out.println("Ticket Type  : " + ticketType);
         System.out.println("Status       : " + status);
         System.out.println("Fare Amount  : RM " + String.format("%.2f", fareAmount));

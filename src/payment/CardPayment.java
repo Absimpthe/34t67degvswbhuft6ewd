@@ -7,7 +7,7 @@ public class CardPayment implements Payment{
     public String getCardNumber(){
       return cardNumber;
     }
-    //
+    
     public CardPayment(String cardNumber){
       this.cardNumber = cardNumber;
     }  

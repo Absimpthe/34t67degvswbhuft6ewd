@@ -1,16 +1,16 @@
 package repository;
 
 import model.Admin;
+import exception.FileProcessingException;
 import model.Passenger;
 import model.Route;
 import model.Station;
 import model.Ticket;
 import model.Train;
 import model.User;
+import enums.UserRole;
 import enums.TicketStatus;
 import enums.TicketType;
-import enums.UserRole;
-import exception.FileProcessingException;
 
 import java.io.*;
 import java.util.ArrayList;
@@ -122,8 +122,7 @@ public class TXTFileManager implements FileManager {
         return users;
     }
 
-    // routes.txt row format (written by Route.toString()): routeId,sourceId,destId,distanceKm
-    public ArrayList<Route> loadRoutes(String fileName, ArrayList<Station> stations) throws FileProcessingException {
+    public ArrayList<Route> loadRoutes(String fileName, ArrayList<Station> stations, ArrayList<Train> trains) throws FileProcessingException {
         ArrayList<Route> routes = new ArrayList<>();
         File file = new File(fileName);
         if (!file.exists()) return routes;
@@ -132,21 +131,26 @@ public class TXTFileManager implements FileManager {
             String line;
             while ((line = reader.readLine()) != null) {
                 if (line.isBlank()) continue;
+
                 String[] t = line.split(",");
-                if (t.length != 4) continue;
+                if (t.length < 5) continue;
 
                 Station source = findStationById(stations, t[1].trim());
                 Station destination = findStationById(stations, t[2].trim());
-                if (source == null || destination == null) continue; // skip a route pointing at a missing station
+                if (source == null || destination == null) continue;
 
                 double distance = Double.parseDouble(t[3].trim());
-                routes.add(new Route(t[0].trim(), source, destination, distance));
+                String trainId = t[4].trim();
+                Train train = trainId.isEmpty() ? null : findTrainById(trains, trainId);
+
+                routes.add(new Route(t[0].trim(), source, destination, distance, train));
             }
         } catch (IOException e) {
             throw new FileProcessingException("File system error: Failed to process read sequence on '" + fileName + "'", e);
         } catch (NumberFormatException e) {
             throw new FileProcessingException("Data corruption error: Invalid route record inside '" + fileName + "'", e);
         }
+
         return routes;
     }
 
@@ -196,11 +200,18 @@ public class TXTFileManager implements FileManager {
         return null;
     }
 
-    private Route findRouteById(ArrayList<Route> routes, String id) {
-        for (Route r : routes) {
-            if (r.getRouteId().equalsIgnoreCase(id)) return r;
+    private Train findTrainById(ArrayList<Train> trains, String id) {
+        for (Train t : trains) {
+            if (t.getTrainId().equalsIgnoreCase(id)) return t;
         }
         return null;
+    }
+    
+    private Route findRouteById(ArrayList<Route> routes, String id) {
+    	for (Route r : routes) {
+    		if (r.getRouteId().equalsIgnoreCase(id)) return r;
+    	}
+    	return null;
     }
 
 }
