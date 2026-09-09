@@ -13,8 +13,21 @@ public class UserService {
         users = new HashMap<>();
     }
 
-    public void register(User user) {
+    public void registerUser(User user) {
         users.put(user.getUserId(), user);
+    }
+    
+    public void viewAllUsers() {
+        if (users.isEmpty()) {
+            System.out.println("No users available.");
+            return;
+        }
+
+        System.out.println("----- List of Users -----");
+        for (User user : users.values()) {
+            user.viewProfile();
+            System.out.println("-------------------------");
+        }
     }
 
     public User login(String email, String password)

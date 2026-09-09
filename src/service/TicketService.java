@@ -151,7 +151,7 @@ public class TicketService {
     }
 
     // to view all tickets stored in system (Admin view)
-    public void viewAllTickets() {
+    public void viewTickets() {
         if (tickets.isEmpty()) {
             System.out.println("No tickets recorded in the system.");
             return;

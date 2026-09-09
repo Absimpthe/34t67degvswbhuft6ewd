@@ -94,7 +94,7 @@ public class Main {
             trainService.setTrains(loadedTrains);
 
             for (User u : fileManager.loadUsers(USERS_FILE)) {
-                userService.register(u);
+                userService.registerUser(u);
             }
 
             routeService.setRoutes(
@@ -111,7 +111,7 @@ public class Main {
         }
 
         if (userService.findUser(DEFAULT_ADMIN_ID) == null) {
-            userService.register(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
+            userService.registerUser(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
         }
     }
 
@@ -179,7 +179,7 @@ public class Main {
         }
 
         String userId = userService.generatePassengerId();
-        userService.register(new Passenger(userId, name, email, password, 0.0));
+        userService.registerUser(new Passenger(userId, name, email, password, 0.0));
         System.out.println("Registration successful! Your User ID is " + userId + ". You may now log in as " + name + ".");
     }
 
@@ -200,8 +200,9 @@ public class Main {
             System.out.println("7. Create Route");
             System.out.println("8. View Routes");
             System.out.println("9. View All Tickets");
-            System.out.println("10. Generate Report");
-            System.out.println("11. Logout");
+            System.out.println("10. Sort Tickets by Status");
+            System.out.println("11. Generate Report");
+            System.out.println("12. Logout");
             System.out.print("Choose Administrative Operation: ");
 
             switch (scanner.nextLine().trim()) {
@@ -213,16 +214,49 @@ public class Main {
                 case "6": trainService.viewTrains(); break;
                 case "7": adminCreateRoute(); break;
                 case "8": routeService.viewRoutes(); break;
-                case "9": ticketService.viewAllTickets(); break;
-                case "10": reportService.generateReport(ticketService.getTickets()); break;
-                case "11":
+                case "9": ticketService.viewTickets(); break;
+                case "10": adminSortTicketsByStatus(); break;
+                case "11": reportService.generateReport(ticketService.getTickets()); break;
+                case "12":
                     System.out.println("Logging out of Admin Portal.");
                     inAdminMenu = false;
                     break;
                 default:
-                    System.out.println("Invalid action selection. Choose an option from 1 to 11.");
+                    System.out.println("Invalid action selection. Choose an option from 1 to 12.");
             }
         }
+    }
+    
+    private static void adminSortTicketsByStatus() {
+        ArrayList<Ticket> tickets = ticketService.getTickets();
+
+        if (tickets.isEmpty()) {
+            System.out.println("No tickets available to sort.");
+            return;
+        }
+
+        Collections.sort(tickets, new Comparator<Ticket>() {
+            @Override
+            public int compare(Ticket t1, Ticket t2) {
+                return Integer.compare(statusRank(t1), statusRank(t2));
+            }
+
+            private int statusRank(Ticket ticket) {
+                if (ticket.getStatus() == enums.TicketStatus.ACTIVE) {
+                    return 1;
+                }
+                if (ticket.getStatus() == enums.TicketStatus.USED) {
+                    return 2;
+                }
+                if (ticket.getStatus() == enums.TicketStatus.CANCELLED) {
+                    return 3;
+                }
+                return 4;
+            }
+        });
+
+        System.out.println("Tickets sorted by status: ACTIVE, USED, CANCELLED");
+        ticketService.viewTickets();
     }
 
     private static void adminAddStation() {
