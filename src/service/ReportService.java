@@ -32,7 +32,6 @@ public class ReportService {
             return;
         }
 
-        // Keep the original report structure, but delegate the relevant stats
         printSalesSummaryHeader();
         showTotalSales();
         showTotalRevenue();

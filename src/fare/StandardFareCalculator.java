@@ -19,9 +19,9 @@ public class StandardFareCalculator implements FareCalculator {
         if (ticketType == TicketType.SINGLE) {
             return calculatedFare;
         } else if (ticketType == TicketType.DAILY) {
-            return calculatedFare * 2.5; // here multiplies for daily unlimited pass
+            return calculatedFare * 2.5; // for daily pass
         } else if (ticketType == TicketType.MONTHLY) {
-            return calculatedFare * 15.0; // here multiplies for monthly pass
+            return calculatedFare * 15.0; // for monthly pass
         }
 
         return calculatedFare;
