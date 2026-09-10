@@ -57,20 +57,29 @@ public class TXTFileManager implements FileManager {
             // Branch logic based on the target filename string pattern
             if (fileName.toLowerCase().contains("stations")) {
                 ArrayList<Station> stations = new ArrayList<>();
+                int lineNo = 0;
                 while ((line = reader.readLine()) != null) {
+                    lineNo++;
                     String[] tokens = line.split(",");
                     if (tokens.length == 3) {
                         stations.add(new Station(tokens[0].trim(), tokens[1].trim(), tokens[2].trim()));
+                    } else {
+                        warnedSkipped(fileName, lineNo);
                     }
                 }
                 return stations;
             } else if (fileName.toLowerCase().contains("trains")) {
                 ArrayList<Train> trains = new ArrayList<>();
+                int lineNo = 0;
                 while ((line = reader.readLine()) != null) {
+                    lineNo++;
+                    if (line.isBlank()) continue;
                     String[] tokens = line.split(",");
                     if (tokens.length == 3) {
                         int capacity = Integer.parseInt(tokens[2].trim());
                         trains.add(new Train(tokens[0].trim(), tokens[1].trim(), capacity));
+                    }else{
+                        warnedSkipped(fileName, lineNo);
                     }
                 }
                 return trains;
@@ -96,10 +105,15 @@ public class TXTFileManager implements FileManager {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            int lineNo = 0;
             while ((line = reader.readLine()) != null) {
+                lineNo++;
                 if (line.isBlank()) continue;
                 String[] t = line.split(",");
-                if (t.length != 6) continue;
+                if (t.length != 6) {
+                    warnedSkipped(fileName, lineNo);
+                    continue;
+                }
 
                 String userId = t[0].trim();
                 String name = t[1].trim();
@@ -129,15 +143,23 @@ public class TXTFileManager implements FileManager {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            int lineNo = 0;
             while ((line = reader.readLine()) != null) {
+                lineNo++;
                 if (line.isBlank()) continue;
 
                 String[] t = line.split(",");
-                if (t.length < 5) continue;
+                if (t.length < 5 || t.length > 5) {
+                    warnedSkipped(fileName, lineNo);
+                    continue;
+                }
 
                 Station source = findStationById(stations, t[1].trim());
                 Station destination = findStationById(stations, t[2].trim());
-                if (source == null || destination == null) continue;
+                if (source == null || destination == null) {
+                    warnedSkipped(fileName, lineNo);
+                    continue;
+                }   
 
                 double distance = Double.parseDouble(t[3].trim());
                 String trainId = t[4].trim();
@@ -186,7 +208,9 @@ public class TXTFileManager implements FileManager {
     }
 
     // private helpers
-
+    private void warnedSkipped(String fileName, int lineNo){
+        System.out.println("[Warning] Skipped invalid record on line " + lineNo + " of " + fileName + ".");
+    }
     private String formatUser(User user) {
         double balance = (user instanceof Passenger) ? ((Passenger) user).getBalance() : 0.0;
         return user.getUserId() + "," + user.getName() + "," + user.getEmail() + ","

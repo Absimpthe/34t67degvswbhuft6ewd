@@ -14,9 +14,25 @@ public class StationService {
     }
 
     // appends station to the end of the list
-    public void addStation(Station station) {
+    public boolean addStation(Station station) {
+        if(stationIdExists(station.getStationId())){
+            System.out.println("[Error] Station ID " + station.getStationId() + " already exists. Cannot add station.");
+            return false;
+        }
         stations.add(station);
         System.out.println("Station added successfully: " + station.getName());
+        return true;
+    }
+
+    public boolean stationIdExists(String stationId){
+        String searchId = (stationId == null) ? " " : stationId.trim();
+        for(Station station : stations){
+            String currentId = station.getStationId();
+            if(currentId != null && currentId.trim().equalsIgnoreCase(searchId)){
+                return true;
+            }
+        }
+        return false;
     }
 
     public void viewStations() {

@@ -130,6 +130,14 @@ public class ReportService {
         }
     }
 
+    public void showPaymentSummary(PaymentService paymentService) {
+        System.out.println("\n--- Payment Summary (this session) ---");
+        System.out.println("Successful Top-ups   : " + paymentService.getSuccessfulTransactions());
+        System.out.println("Failed Top-ups       : " + paymentService.getFailedTransactions());
+        System.out.printf("Total Collected      : RM %.2f%n", paymentService.getTotalCollected());
+        System.out.println("==========================================");
+    }
+    
     public void generatePassengerReport(ArrayList<Ticket> tickets) {
         System.out.println("\n===== PASSENGER ACTIVITY REPORT =====");
 

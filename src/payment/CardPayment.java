@@ -15,7 +15,7 @@ public class CardPayment implements Payment{
     @Override
     public boolean pay(double amount) {
         //card validation
-        if(cardNumber == null || cardNumber.trim().length() < 14){
+        if(cardNumber == null || !cardNumber.matches("\\d{14,19}")){
            System.out.print("The card is not verified / Invalid card number. Payment Failed");
             return false;
         }  
@@ -25,7 +25,7 @@ public class CardPayment implements Payment{
         }
         
         System.out.printf("Processing card payment of RM %.2f...%n", amount);
-        System.out.println("Payment amount: RM " + amount);
+        System.out.printf("Payment amount: RM %.2f%n", amount);
         System.out.println("Card payment successful.");
         return true;
     }

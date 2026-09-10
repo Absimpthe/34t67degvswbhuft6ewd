@@ -11,11 +11,24 @@ public class TrainService {
         this.trains = new ArrayList<>();
     }
 
-    public void addTrain(Train train) {
+    public boolean addTrain(Train train) {
+        if(trainIdExists(train.getTrainId())){
+            System.out.println("[Error] Train ID " + train.getTrainId() + "already exists. IDs must be unique.");
+            return false;
+        }
         trains.add(train);
         System.out.println("Train added successfully: " + train.getTrainName());
+        return true;
     }
 
+    public boolean trainIdExists(String trainId){
+        for(Train train : trains){
+            if(train.getTrainId().equalsIgnoreCase(trainId)){
+                return true;
+            }
+        }
+        return false;
+    }
     public void viewTrains() {
         if (trains.isEmpty()) {
             System.out.println("No trains available.");

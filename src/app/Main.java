@@ -20,11 +20,14 @@ import exception.InvalidLoginException;
 import exception.TicketNotFoundException;
 import payment.CardPayment;
 import payment.CashPayment;
+import payment.EWalletPayment;
 import payment.EWalletProvider;
 import payment.Payment;
 import enums.TicketType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Scanner;
@@ -40,6 +43,7 @@ public class Main {
     private static final String DEFAULT_ADMIN_ID = "AD000";
     private static final String DEFAULT_ADMIN_EMAIL = "admin@metro.com";
     private static final String DEFAULT_ADMIN_PASSWORD = "admin123";
+    private static final int MIN_PASSWORD_LENGTH = 6;
 
     private static UserService userService = new UserService();
     private static StationService stationService = new StationService();
@@ -51,6 +55,7 @@ public class Main {
     private static TXTFileManager fileManager = new TXTFileManager();
 
     private static Scanner scanner = new Scanner(System.in);
+    private static Set<String> protectedFiles = new HashSet<>(); //a corrupt file never wipes out content in it
 
     public static void main(String[] args) {
         System.out.println("--- Booting Smart Metro Ticketing System ---");
@@ -89,31 +94,64 @@ public class Main {
 
     private static void loadAllData() {
         try {
-            ArrayList<Station> loadedStations = castStations(fileManager.loadData(STATIONS_FILE));
-            ArrayList<Train> loadedTrains = castTrains(fileManager.loadData(TRAINS_FILE));
-            stationService.setStations(loadedStations);
-            trainService.setTrains(loadedTrains);
+            stationService.setStations(castStations(fileManager.loadData(STATIONS_FILE)));
+        }catch(FileProcessingException e){
+            markLoadFailure(STATIONS_FILE, e);
+        }
 
+        try {
+            trainService.setTrains(castTrains(fileManager.loadData(TRAINS_FILE)));
+        } catch (FileProcessingException e) {
+            markLoadFailure(TRAINS_FILE, e);
+        }
+
+        try {
             for (User u : fileManager.loadUsers(USERS_FILE)) {
                 userService.registerUser(u);
             }
-
-            routeService.setRoutes(
-                fileManager.loadRoutes(ROUTES_FILE, stationService.getStations(), trainService.getTrains())
-            );
-
-            ticketService.setTickets(
-                fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes())
-            );
-
-            System.out.println("[System Initialization] Local database files mapped successfully.");
         } catch (FileProcessingException e) {
-            System.out.println("[Warning] File restore bypassed: " + e.getMessage());
+            markLoadFailure(USERS_FILE, e);
+        }
+
+        // routes point to stations and trains; if either failed, routes cannot be rebuilt correctly
+        if (protectedFiles.contains(STATIONS_FILE) || protectedFiles.contains(TRAINS_FILE)) {
+            protectedFiles.add(ROUTES_FILE);
+        } else {
+            try {
+                routeService.setRoutes(
+                    fileManager.loadRoutes(ROUTES_FILE, stationService.getStations(), trainService.getTrains()));
+            } catch (FileProcessingException e) {
+                markLoadFailure(ROUTES_FILE, e);
+            }
+        }
+
+        // tickets point to users and routes; if either failed, tickets cannot be rebuilt correctly
+        if (protectedFiles.contains(USERS_FILE) || protectedFiles.contains(ROUTES_FILE)) {
+            protectedFiles.add(TICKETS_FILE);
+        } else {
+            try {
+                ticketService.setTickets(
+                    fileManager.loadTickets(TICKETS_FILE, userService.getUsers(), routeService.getRoutes()));
+            } catch (FileProcessingException e) {
+                markLoadFailure(TICKETS_FILE, e);
+            }
+        }
+
+        if (protectedFiles.isEmpty()) {
+            System.out.println("[System Initialization] Local database files mapped successfully.");
+        } else {
+            System.out.println("[Warning] These files were not fully loaded and will NOT be overwritten on exit: " + protectedFiles);
+            System.out.println("[Warning] Fix or remove the affected file(s), then restart the system.");
         }
 
         if (userService.findUser(DEFAULT_ADMIN_ID) == null) {
             userService.registerUser(new Admin(DEFAULT_ADMIN_ID, "System Admin", DEFAULT_ADMIN_EMAIL, DEFAULT_ADMIN_PASSWORD));
         }
+    }
+
+    private static void markLoadFailure(String fileName, FileProcessingException exp) {
+        System.out.println("[Warning] File restore bypassed: " + exp.getMessage());
+        protectedFiles.add(fileName);
     }
 
     @SuppressWarnings("unchecked")
@@ -128,18 +166,34 @@ public class Main {
 
     private static void saveAllData() {
         System.out.println("\n[System Shutdown] Initiating database text snapshot sequence...");
-        try {
-            fileManager.saveData(new ArrayList<User>(userService.getUsers().values()), USERS_FILE);
-            fileManager.saveData(stationService.getStations(), STATIONS_FILE);
-            fileManager.saveData(trainService.getTrains(), TRAINS_FILE);
-            fileManager.saveData(routeService.getRoutes(), ROUTES_FILE);
-            fileManager.saveData(ticketService.getTickets(), TICKETS_FILE);
+        boolean allSaved = true;
+        allSaved &= saveFile(new ArrayList<User>(userService.getUsers().values()), USERS_FILE);
+        allSaved &= saveFile(stationService.getStations(), STATIONS_FILE);
+        allSaved &= saveFile(trainService.getTrains(), TRAINS_FILE);
+        allSaved &= saveFile(routeService.getRoutes(), ROUTES_FILE);
+        allSaved &= saveFile(ticketService.getTickets(), TICKETS_FILE);
+
+        if (allSaved) {
             System.out.println("[System Shutdown] Data successfully synchronized. Safe travels!");
-        } catch (FileProcessingException e) {
-            System.out.println("[Critical Failure] System unable to persist internal memory states: " + e.getMessage());
+        } else {
+            System.out.println("[System Shutdown] Some files were not saved. See the messages above.");
         }
     }
 
+    // saves one file, skipping it if it failed to load at startup (so its records are not wiped)
+    private static boolean saveFile(ArrayList<?> data, String fileName) {
+        if (protectedFiles.contains(fileName)) {
+            System.out.println("[Warning] " + fileName + " was left untouched because it failed to load at startup.");
+            return false;
+        }
+        try {
+            fileManager.saveData(data, fileName);
+            return true;
+        } catch (FileProcessingException e) {
+            System.out.println("[Critical Failure] Unable to save " + fileName + ": " + e.getMessage());
+            return false;
+        }
+    }
     // ---------------- authentication ----------------
 
     private static void handleLogin() {
@@ -163,15 +217,48 @@ public class Main {
 
     private static void handlePassengerRegistration() {
         System.out.println("\n--- PASSENGER REGISTRATION ---");
-        System.out.print("Enter Full Name: ");
-        String name = scanner.nextLine().trim();
-        String email = promptForValidEmail("Enter Email: ");
-        System.out.print("Create Password: ");
-        String password = scanner.nextLine().trim();
+        
+        String name;
+        while(true){ //name
+            System.out.print("Enter Full Name: ");
+            name = scanner.nextLine().trim();
+            if(name.isEmpty()){
+                System.out.println("[Error] Registration failed: Name cannot be empty.");
+            }else if(containsComma(name)){
+                System.out.println("[Error] Registration failed: Name cannot contain commas.");
+            }else{
+                break;
+            }
+        }
 
-        if (name.isEmpty() || email.isEmpty() || password.isEmpty()) {
-            System.out.println("[Error] Registration failed: Fields cannot be empty.");
-            return;
+        String email;
+        while(true){ //email
+            email = promptForValidEmail("Enter Email: ");
+            
+            if(email.isEmpty()) {
+                System.out.println("[Error] Registration failed: Email cannot be empty.");
+                return;
+            }
+            if(userService.findUserByEmail(email) != null){
+                System.out.println("[Error] Registration failed: Email is already registered. Please use a different email.");
+            } else {
+                break;
+            }
+        }
+
+        String password;
+        while(true){ //password
+            System.out.print("Enter Password: ");
+            password = scanner.nextLine().trim();
+            if(password.isEmpty()){
+                System.out.println("[Error] Registration failed: Password cannot be empty.");
+            }else if(containsComma(password)){
+                System.out.println("[Error] Registration failed: Password cannot contain commas.");
+            }else if(password.length() < MIN_PASSWORD_LENGTH){
+                System.out.println("[Error] Registration failed: Password must be at least " + MIN_PASSWORD_LENGTH + " characters long.");
+            }else{
+                break;
+            }
         }
 
         if (userService.findUserByEmail(email) != null) {
@@ -189,21 +276,27 @@ public class Main {
     private static void showAdminMenu(Admin admin) {
         boolean inAdminMenu = true;
         while (inAdminMenu) {
-            System.out.println("\n=================================");
+            System.out.println("\n=====================================");
             System.out.println("   ADMIN DASHBOARD - " + admin.getName());
-            System.out.println("=================================");
+            System.out.println("=====================================");
+            System.out.println("1 to 4 : Station Management");
             System.out.println("1. Add Station");
             System.out.println("2. View Stations");
             System.out.println("3. Search Station");
             System.out.println("4. Sort Stations by Name");
+            System.out.println("-------------------------------------");
+            System.out.println("5 to 8 : Train & Route Management");
             System.out.println("5. Add Train");
             System.out.println("6. View Trains");
             System.out.println("7. Create Route");
             System.out.println("8. View Routes");
+            System.out.println("-------------------------------------");
+            System.out.println("9 to 13 : Ticketing & Reporting");
             System.out.println("9. View All Tickets");
             System.out.println("10. Sort Tickets by Status");
             System.out.println("11. Generate Report");
-            System.out.println("12. Logout");
+            System.out.println("12. View All Users");
+            System.out.println("13. Logout");
             System.out.print("Choose Administrative Operation: ");
 
             switch (scanner.nextLine().trim()) {
@@ -217,13 +310,17 @@ public class Main {
                 case "8": routeService.viewRoutes(); break;
                 case "9": ticketService.viewTickets(); break;
                 case "10": adminSortTicketsByStatus(); break;
-                case "11": reportService.generateReport(ticketService.getTickets()); break;
+                case "11": reportService.generateReport(ticketService.getTickets()); 
+                           reportService.showPaymentSummary(paymentService);   
+                           break;
                 case "12":
-                    System.out.println("Logging out of Admin Portal.");
+                    userService.viewAllUsers(); break;
+                case "13":
+                    System.out.println("Logging out.");
                     inAdminMenu = false;
                     break;
                 default:
-                    System.out.println("Invalid action selection. Choose an option from 1 to 12.");
+                    System.out.println("Invalid action selection. Choose an option from 1 to 13.");
             }
         }
     }
@@ -300,48 +397,114 @@ public class Main {
 
     private static void adminAddTrain() {
         System.out.println("\n--- ADD TRAIN ---");
-        System.out.print("Train ID: ");
-        String id = scanner.nextLine().trim();
-        System.out.print("Train Name: ");
-        String name = scanner.nextLine().trim();
-        int capacity = promptForSafeInteger("Capacity: ");
+    
+        String id;
+        while(true){
+        System.out.print("Enter Train ID: ");
+        id = scanner.nextLine().trim();
+        
+        if(id.isEmpty()){
+            System.out.println("[Error] Train ID cannot be empty.");
+        }else if(trainService.trainIdExists(id)){
+            System.out.println("[Error] Train ID " + id + " already exists. IDs must be unique.");
+        
+        }else if(id.contains(",")) {
+            System.out.println("[Error] Train ID and Name    cannot contain commas.");
 
-        if (id.isEmpty() || name.isEmpty()) {
-            System.out.println("[Error] Fields cannot be left empty.");
-            return;
+        }else {
+            break;
+        } 
+
+        String name;
+        while(true){
+            System.out.print("Enter Train Name: ");
+            name = scanner.nextLine().trim();
+            
+            if(name.isEmpty()){
+                System.out.println("[Error] Train Name cannot be empty.");
+            }else if(name.contains(",")){
+                System.out.println("[Error] Train Name cannot contain commas.");
+            }else{
+                break;
+            }
         }
 
-        if (capacity < 0) {
-            System.out.println("[Error] Train capacity cannot be negative.");
-            return;
-        }
-
+        int capacity = 0;
+        while (true) {
+            capacity = promptForSafeInteger("Capacity: ");
+        
+            if (capacity == 0) {
+                System.out.println("[Error] Capacity cannot be empty or zero. Please try again.");
+            } else if (capacity <= 0) { // Check comma directly on the capacity
+                System.out.println("[Error] Train capacity must be greater than 0.");
+            }  else {
+                break; // Capacity is valid, break out of the loop
+            }
+        } 
+        
         trainService.addTrain(new Train(id, name, capacity));
     }
-
+}
     private static void adminCreateRoute() {
         System.out.println("\n--- CREATE ROUTE ---");
-        System.out.print("New Route ID: ");
-        String routeId = scanner.nextLine().trim();
-
-        System.out.print("Source Station Name: ");
-        Station source = stationService.searchStation(scanner.nextLine().trim());
-        if (source == null) {
-            System.out.println("[Error] Source station not found.");
-            return;
+        
+        String routeId;
+        while(true){
+            System.out.print("Route ID: ");
+            routeId = scanner.nextLine().trim();
+            if(routeId.isEmpty()){
+                System.out.println("[Error] Route ID cannot be empty.");
+            }else if(routeService.routeIdExists(routeId)){
+                System.out.println("[Error] Route ID " + routeId + " already exists. IDs must be unique.");
+            }else if(routeId.contains(",")){
+                System.out.println("[Error] Route ID cannot contain commas.");
+            }else{
+                break;
+            }
         }
 
-        System.out.print("Destination Station Name: ");
-        Station destination = stationService.searchStation(scanner.nextLine().trim());
-        if (destination == null) {
-            System.out.println("[Error] Destination station not found.");
-            return;
-        }
+        Station source = null;
+        Station destination = null;
 
-        double distance = promptForSafeDouble("Distance (km): ");
-        if (distance < 0) {
-            System.out.println("[Error] Route distance cannot be negative.");
-            return;
+        while(true){
+            while(true){
+                System.out.print("Source Station Name: ");
+                source = stationService.searchStation(scanner.nextLine().trim());   
+
+                if(source == null){
+                    System.out.println("[Error] Source station not found. Please enter a valid station name."); 
+                }else{
+                    break;
+                }
+            }
+            while(true){
+                
+                System.out.print("Destination Station Name: ");
+                destination = stationService.searchStation(scanner.nextLine().trim());
+
+                if(destination == null){
+                    System.out.println("[Error] Destination station not found. Please enter a valid station name.");
+                }else{
+                    break;
+                }
+            }
+
+            if(source.getStationId().equalsIgnoreCase(destination.getStationId())){
+                System.out.println("[Error] Source and destination stations cannot be the same. Please enter different stations.");
+                System.out.println("        Please re-enter the source and destination stations.");
+            }else{
+                break;
+            }
+        }
+        
+        double distance;
+        while(true){
+            distance = promptForSafeDouble("Distance (in km): ");
+            if(distance <= 0){
+                System.out.println("[Error] Distance must be greater than 0. Please enter a valid distance.");
+            }else{
+                break;
+            }
         }
 
         if (trainService.getTrains().isEmpty()) {
@@ -385,6 +548,7 @@ public class Main {
             System.out.println("5. Cancel Ticket");
             System.out.println("6. View My Tickets");
             System.out.println("7. Logout");
+            System.out.print("Choose an action: ");
 
             switch (scanner.nextLine().trim()) {
                 case "1":
@@ -423,7 +587,7 @@ public class Main {
             return;
         }
 
-        System.out.println("Select Payment Method: 1. Cash  2. Card");
+        System.out.println("Select Payment Method: 1. Cash  2. Card 3. E-Wallet");
         Payment payment;
         switch (scanner.nextLine().trim()) {
             case "1":
@@ -433,16 +597,45 @@ public class Main {
                 System.out.print("Enter Card Number: ");
                 payment = new CardPayment(scanner.nextLine().trim());
                 break;
+            case "3":
+                EWalletProvider provider = promptForEWalletProvider();
+                if(provider == null){
+                    System.out.println("[Error] Invalid E-Wallet provider selection.");
+                    return;
+                }
+                System.out.print("Enter Phone Number (e.g. 0123456789): ");
+                payment = new EWalletPayment(provider, scanner.nextLine().trim());
+                break;
             default:
                 System.out.println("[Error] Invalid payment method selection.");
                 return;
         }
-
+        System.out.printf("Confirm top-up of RM %.2f via %s? (Y/N): ", amount, payment.getMethodName());
+        if(!scanner.nextLine().trim().equalsIgnoreCase("Y")){
+            System.out.println("Payment cancelled. Top-up not applied.");
+            return;
+        }
         if (paymentService.processPayment(payment, amount)) {
             passenger.topUp(amount);
         } else {
             System.out.println("Top-up cancelled: payment was not completed.");
         }
+    }
+    // list every provider in the enum, then return one
+    private static EWalletProvider promptForEWalletProvider() {
+        EWalletProvider[] providers = EWalletProvider.values();
+        System.out.println("Select E-Wallet Provider:");
+        for (int i = 0; i < providers.length; i++) {
+            System.out.println((i + 1) + ". " + providers[i].getLabel());
+        }
+        try {
+            int choice = Integer.parseInt(scanner.nextLine().trim());
+            if (choice >= 1 && choice <= providers.length) {
+                return providers[choice - 1];
+            }
+        } catch (NumberFormatException e) {
+        }
+        return null;
     }
 
     private static void passengerBuyTicket(Passenger passenger) {
@@ -509,7 +702,7 @@ public class Main {
     // ---------------- input helpers ----------------
 
     private static boolean isValidEmail(String email) {
-        if (email == null || email.isBlank()) {
+        if (email == null || email.isBlank() || email.contains(",")) {
             return false;
         }
 
@@ -561,5 +754,14 @@ public class Main {
                 System.out.println("Invalid number! Please enter a valid amount.");
             }
         }
+    }
+
+    private static boolean containsComma(String... fields) {
+        for (String field : fields) {
+            if (field != null && field.contains(",")) {
+                return true;
+            }
+        }
+        return false;
     }
 }
