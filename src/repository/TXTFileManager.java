@@ -60,6 +60,7 @@ public class TXTFileManager implements FileManager {
                 int lineNo = 0;
                 while ((line = reader.readLine()) != null) {
                     lineNo++;
+                    if(line.isBlank()) continue;
                     String[] tokens = line.split(",");
                     if (tokens.length == 3) {
                         stations.add(new Station(tokens[0].trim(), tokens[1].trim(), tokens[2].trim()));
@@ -184,10 +185,15 @@ public class TXTFileManager implements FileManager {
 
         try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
             String line;
+            int lineNo = 0;
             while ((line = reader.readLine()) != null) {
+                lineNo++;
                 if (line.isBlank()) continue;
                 String[] t = line.split(",");
-                if (t.length != 6) continue;
+                if (t.length != 6) {
+                    warnedSkipped(fileName, lineNo);
+                    continue;
+                }
 
                 User owner = users.get(t[1].trim());
                 Route route = findRouteById(routes, t[2].trim());

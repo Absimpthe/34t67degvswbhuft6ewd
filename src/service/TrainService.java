@@ -13,7 +13,7 @@ public class TrainService {
 
     public boolean addTrain(Train train) {
         if(trainIdExists(train.getTrainId())){
-            System.out.println("[Error] Train ID " + train.getTrainId() + "already exists. IDs must be unique.");
+            System.out.println("[Error] Train ID " + train.getTrainId() + " already exists. IDs must be unique.");
             return false;
         }
         trains.add(train);

@@ -71,7 +71,7 @@ public class TicketService {
         }
 
         if (targetTicket == null) {
-            throw new TicketNotFoundException("Error: Ticket ID " + ticketId + " was not found.");
+            throw new TicketNotFoundException("Ticket ID " + ticketId + " was not found.");
         }
 
         if (!targetTicket.getPassenger().getUserId().equalsIgnoreCase(passengerUserId)) {
@@ -106,7 +106,7 @@ public class TicketService {
         }
 
         if (targetTicket == null) {
-            throw new TicketNotFoundException("Error: Ticket ID " + ticketId + " was not found.");
+            throw new TicketNotFoundException("Ticket ID " + ticketId + " was not found.");
         }
 
         if (!targetTicket.getPassenger().getUserId().equalsIgnoreCase(passengerUserId)) {

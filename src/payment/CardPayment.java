@@ -15,8 +15,8 @@ public class CardPayment implements Payment{
     @Override
     public boolean pay(double amount) {
         //card validation
-        if(cardNumber == null || !cardNumber.matches("\\d{14,19}")){
-           System.out.print("The card is not verified / Invalid card number. Payment Failed");
+        if(!isValidCardNumber(cardNumber)){
+           System.out.println("The card is not verified / Invalid card number. Payment Failed");
             return false;
         }  
         if(amount <= 0 ){
@@ -30,6 +30,10 @@ public class CardPayment implements Payment{
         return true;
     }
 
+    public static boolean isValidCardNumber(String cardNumber){
+        return cardNumber != null && cardNumber.matches("\\d{14,19}");
+    }
+    
     @Override 
     public String getMethodName(){
         return "Card";

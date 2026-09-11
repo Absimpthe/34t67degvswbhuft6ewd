@@ -285,13 +285,13 @@ public class Main {
             System.out.println("3. Search Station");
             System.out.println("4. Sort Stations by Name");
             System.out.println("-------------------------------------");
-            System.out.println("5 to 8 : Train & Route Management");
+            System.out.println("   5 to 8 : Train & Route Management");
             System.out.println("5. Add Train");
             System.out.println("6. View Trains");
             System.out.println("7. Create Route");
             System.out.println("8. View Routes");
             System.out.println("-------------------------------------");
-            System.out.println("9 to 13 : Ticketing & Reporting");
+            System.out.println("   9 to 13 : Ticketing & Reporting");
             System.out.println("9. View All Tickets");
             System.out.println("10. Sort Tickets by Status");
             System.out.println("11. Generate Report");
@@ -370,6 +370,12 @@ public class Main {
             System.out.println("[Error] Fields cannot be left empty.");
             return;
         }
+
+        if(containsComma(id, name, location)){
+            System.out.println("[Error] Station ID, Name, and Location cannot contain commas.");
+            return;
+        }
+
         stationService.addStation(new Station(id, name, location));
     }
 
@@ -414,6 +420,7 @@ public class Main {
         }else {
             break;
         } 
+        }
 
         String name;
         while(true){
@@ -435,7 +442,7 @@ public class Main {
         
             if (capacity == 0) {
                 System.out.println("[Error] Capacity cannot be empty or zero. Please try again.");
-            } else if (capacity <= 0) { // Check comma directly on the capacity
+            } else if (capacity <= 0) { 
                 System.out.println("[Error] Train capacity must be greater than 0.");
             }  else {
                 break; // Capacity is valid, break out of the loop
@@ -444,10 +451,19 @@ public class Main {
         
         trainService.addTrain(new Train(id, name, capacity));
     }
-}
+
     private static void adminCreateRoute() {
         System.out.println("\n--- CREATE ROUTE ---");
         
+        if (stationService.getStations().size() < 2) {
+            System.out.println("[Error] At least two stations are needed to create a route. Add stations first.");
+            return;
+        }
+        if (trainService.getTrains().isEmpty()) {
+            System.out.println("[Error] No trains available. Add a train first.");
+            return;
+        }
+
         String routeId;
         while(true){
             System.out.print("Route ID: ");
@@ -515,21 +531,28 @@ public class Main {
         System.out.println("\nAvailable Trains:");
         trainService.viewTrains();
 
-        System.out.print("Enter Train ID to assign to this route: ");
-        String trainId = scanner.nextLine().trim();
         Train assignedTrain = null;
-        for (Train train : trainService.getTrains()) {
-            if (train.getTrainId().equalsIgnoreCase(trainId)) {
-                assignedTrain = train;
-                break;
+        while(assignedTrain == null){
+            System.out.print("Enter Train ID to assign to this route: ");
+            String trainId = scanner.nextLine().trim();
+
+            if(trainId.isEmpty()){
+                System.out.println("[Error] Train ID cannot be empty. Please enter a valid Train ID.");
+                continue;
+            }
+
+            for(Train train : trainService.getTrains()){
+                if(train.getTrainId().equalsIgnoreCase(trainId)){
+                    assignedTrain = train;
+                    break;
+                }  
+            }
+
+            if(assignedTrain == null){
+                System.out.println("[Error] Train ID " + trainId + " not found. Please enter a valid one.");
             }
         }
-
-        if (assignedTrain == null) {
-            System.out.println("[Error] Train not found.");
-            return;
-        }
-
+        
         routeService.addRoute(new Route(routeId, source, destination, distance, assignedTrain));
     }
 
@@ -594,8 +617,21 @@ public class Main {
                 payment = new CashPayment();
                 break;
             case "2":
-                System.out.print("Enter Card Number: ");
-                payment = new CardPayment(scanner.nextLine().trim());
+                String cardNumber;
+                while(true){
+                    System.out.print("Enter card number (14-19 digits, 0 to cancel");
+                    cardNumber = scanner.nextLine().trim().replace(" ", "");
+                    if(cardNumber.equals("0")){
+                        System.out.println("Top-up cancelled.");
+                        return;
+                    }
+
+                    if(CardPayment.isValidCardNumber(cardNumber)){
+                        break;
+                    }
+                    System.out.println("[Error] Invalid card number. It must be 14 to 19 digits with no letters. Please try again.");
+                }
+                payment = new CardPayment(cardNumber);
                 break;
             case "3":
                 EWalletProvider provider = promptForEWalletProvider();
@@ -603,8 +639,22 @@ public class Main {
                     System.out.println("[Error] Invalid E-Wallet provider selection.");
                     return;
                 }
-                System.out.print("Enter Phone Number (e.g. 0123456789): ");
-                payment = new EWalletPayment(provider, scanner.nextLine().trim());
+                
+                String walletEmail;
+                while(true){
+                    System.out.print("Enter the email linked to your " + provider.getLabel() + " account (0 to cancel): ");
+                    walletEmail = scanner.nextLine().trim().toLowerCase();
+                    if(walletEmail.equals("0")){
+                        System.out.println("Top-up cancelled.");
+                        return;
+                    }
+
+                    if(isValidEmail(walletEmail)){
+                        break;
+                    }
+                    System.out.println("[Error] Please enther a valid email address (e.g alice@mail.com).");  
+                }
+                payment = new EWalletPayment(provider, walletEmail);
                 break;
             default:
                 System.out.println("[Error] Invalid payment method selection.");

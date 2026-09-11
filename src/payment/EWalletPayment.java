@@ -1,13 +1,13 @@
 package payment;
 
-// simulates paying from an external e-wallet app (e.g. Touch 'n Go) to top up the metro wallet
+// simulates paying from an external e-wallet account (e.g. Touch 'n Go) to top up the metro wallet
 public class EWalletPayment implements Payment {
     private EWalletProvider provider;
-    private String phoneNumber;
+    private String email;   // email address linked to the e-wallet account
 
-    public EWalletPayment(EWalletProvider provider, String phoneNumber) {
+    public EWalletPayment(EWalletProvider provider, String email) {
         this.provider = provider;
-        this.phoneNumber = phoneNumber;
+        this.email = email;
     }
 
     @Override
@@ -16,9 +16,9 @@ public class EWalletPayment implements Payment {
             System.out.println("E-Wallet payment failed: no provider selected.");
             return false;
         }
-        // Malaysian mobile number: 01 followed by 8 or 9 digits, e.g. 0123456789
-        if (phoneNumber == null || !phoneNumber.trim().matches("01\\d{8,9}")) {
-            System.out.println("E-Wallet payment failed: invalid phone number (e.g. 0123456789).");
+        // safety net: Main already re-prompts until the email is valid
+        if (email == null || !email.trim().matches("[^@\\s,]+@[^@\\s,]+\\.[^@\\s,]+")) {
+            System.out.println("E-Wallet payment failed: invalid e-wallet email address.");
             return false;
         }
         if (amount <= 0) {
@@ -26,7 +26,7 @@ public class EWalletPayment implements Payment {
             return false;
         }
 
-        System.out.println("Connecting to " + provider.getLabel() + "...");
+        System.out.println("Connecting to " + provider.getLabel() + " account " + email + "...");
         System.out.printf("Processing e-wallet payment of RM %.2f...%n", amount);
         System.out.println("E-Wallet payment successful.");
         return true;
@@ -41,7 +41,7 @@ public class EWalletPayment implements Payment {
         return provider;
     }
 
-    public String getPhoneNumber() {
-        return phoneNumber;
+    public String getEmail() {
+        return email;
     }
 }
