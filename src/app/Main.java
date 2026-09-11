@@ -406,20 +406,18 @@ public class Main {
     
         String id;
         while(true){
-        System.out.print("Enter Train ID: ");
-        id = scanner.nextLine().trim();
+            System.out.print("Enter Train ID: ");
+            id = scanner.nextLine().trim();
         
-        if(id.isEmpty()){
-            System.out.println("[Error] Train ID cannot be empty.");
-        }else if(trainService.trainIdExists(id)){
-            System.out.println("[Error] Train ID " + id + " already exists. IDs must be unique.");
-        
-        }else if(id.contains(",")) {
-            System.out.println("[Error] Train ID and Name    cannot contain commas.");
-
-        }else {
-            break;
-        } 
+            if(id.isEmpty()){
+                System.out.println("[Error] Train ID cannot be empty.");
+            }else if(trainService.trainIdExists(id)){
+                System.out.println("[Error] Train ID " + id + " already exists. IDs must be unique.");
+            }else if(id.contains(",")) {
+                System.out.println("[Error] Train ID and Name    cannot contain commas.");
+            }else {
+                break;
+            } 
         }
 
         String name;
