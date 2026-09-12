@@ -96,6 +96,7 @@ public class Ticket {
     // convert ticket details to CSV format for file saving
     @Override
     public String toString() {
-        return ticketId + "," + passenger.getUserId() + "," + route.getRouteId() + "," + ticketType + "," + status + "," + fareAmount;
+        return ticketId + "," + passenger.getUserId() + "," + route.getRouteId() 
+            + "," + ticketType + "," + status + "," + fareAmount;
     }
 }
