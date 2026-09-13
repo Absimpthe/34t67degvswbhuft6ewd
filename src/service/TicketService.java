@@ -42,7 +42,8 @@ public class TicketService {
         // checking if passenger has enough bal
         if (passenger.getBalance() < fare) {
             System.out.println("Purchase failed: Insufficient balance in wallet.");
-            System.out.println("Required: RM " + String.format("%.2f", fare) + " | Available: RM " + String.format("%.2f", passenger.getBalance()));
+            System.out.println("Required: RM " + String.format("%.2f", fare) + " | Available: RM " 
+                               + String.format("%.2f", passenger.getBalance()));
             return null;
         }
 
