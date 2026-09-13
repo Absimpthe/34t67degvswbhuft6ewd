@@ -574,7 +574,7 @@ public class Main {
             switch (scanner.nextLine().trim()) {
                 case "1":
                     passenger.viewProfile();
-                    System.out.println("Balance : RM " + String.format("%.2f", passenger.getBalance()));
+                    System.out.printf("Balance : RM " + String.format("%.2f", passenger.getBalance()));
                     break;
                 case "2": 
                 	passengerTopUp(passenger); 

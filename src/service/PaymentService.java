@@ -33,7 +33,7 @@ public class PaymentService {
         }
         return success;
     }
-    // ↑ processPayment ENDS here. Everything below is class level.
+    
 
     public int getSuccessfulTransactions() {
         return successfulTransactions;

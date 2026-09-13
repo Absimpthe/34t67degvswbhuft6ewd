@@ -1,4 +1,5 @@
 package model;
+import java.util.*;
 
 public class Route {
 
@@ -32,6 +33,10 @@ public class Route {
         return distanceKm;
     }
 
+    public double calculateDistance(){
+        return Math.round(distanceKm * 100.0) / 100.0;
+    }
+
     public Train getTrain() {
         return train;
     }
@@ -60,7 +65,7 @@ public class Route {
         System.out.println("Route ID    : " + routeId);
         System.out.println("Source      : " + source.getName());
         System.out.println("Destination : " + destination.getName());
-        System.out.println("Distance    : " + distanceKm + " km");
+        System.out.printf("Distance    : %.2f km%n" , calculateDistance());
         System.out.println("Train       : " + (train != null ? train.getTrainName() + " (" + train.getTrainId() + ")" : "None"));
     }
 

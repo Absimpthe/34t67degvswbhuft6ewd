@@ -8,7 +8,7 @@ public class StandardFareCalculator implements FareCalculator {
 
     @Override
     public double calculateFare(Route route, TicketType ticketType) {
-        double distance = route.getDistanceKm();
+        double distance = route.calculateDistance();
         double baseFare = 2.00;  // Base rate RM 2.00
         double ratePerKm = 0.50; // RM 0.50 per kilometer
 
